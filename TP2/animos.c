@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include "animos.h"
 
@@ -382,6 +383,7 @@ void animos(int* viento , int* humedad , char* animo_legolas , char* animo_gimli
     char gimli_cena;
     int gimli_horas_dormidas;
 
+    system("clear");
     printf("Reporte de batalla\n\n");
 
     preguntar_dia_del_mes(&dia);

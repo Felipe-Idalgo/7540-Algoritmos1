@@ -22,7 +22,6 @@
 
 const char IGNORAR = 'X';
 const float DELAY = 0.5;
-const float DELAY_LARGO = 1.5;
 
 const int MINIMO_MATRIZ = 0;
 const int MAXIMO_MATRIZ_MENOR = 14;
@@ -36,8 +35,8 @@ const int ENANOS_INICIALES_SEGUND_NIVEL = 0;
 const int ELFOS_INICIALES_SEGUND_NIVEL = 5;
 const int ENANOS_INICIALES_TERCER_NIVEL = 3;
 const int ELFOS_INICIALES_TERCER_NIVEL = 3;
-const int ENANOS_INICIALES_CUARTO_NIVEL = 3;
-const int ELFOS_INICIALES_CUARTO_NIVEL = 3;
+const int ENANOS_INICIALES_CUARTO_NIVEL = 4;
+const int ELFOS_INICIALES_CUARTO_NIVEL = 4;
 const int COSTE_EXTRA = 50;
 const int ORCOS_PARA_AGREGAR_ENANO = 25;
 const int ORCOS_PARA_AGREGAR_DEFENSOR = 50;
@@ -78,9 +77,11 @@ void mostrar_ayuda() {
     printf("\nContamos con enanos (G) y elfos (L) para defender las torres.\n");
     printf("\nLa torre 1 esta a cuidado de Gimli. Tiene 600 puntos de resistencia y en ella hay 10 enanos extra que te podran ayudar, si lo deseas.\n");
     printf("\nLa torre 2 esta a cuidado de Legolas. Tiene 600 puntos de resistencia y en ella hay 10 elfos extra que te podran ayudar, si los necesitas.\n");
+    printf("\nLos Orcos se dirigen desde una Entrada a una sola de las Torres por un camino.\n");
     printf("\nUn G puede atacar a un enemigo por turno y solo aquellos que lo rodean.\n");
-    printf("\nUn L puede atacar a varios enemigos por turno, y a aquellos que estan a 3 celdas de distancia.\n");
-    printf("\nLos orcos no se detienen a luchar. Irán contra una de las torres y la atacarán con toda la vida restante que tengan.\n");
+    printf("\nLos ataques pueden fallar, como también pueden ser críticos o no.\n");
+    printf("\nUn L puede atacar a varios enemigos por turno si están a 3 celdas de distancia.\n");
+    printf("\nLos O no se detienen a luchar. Irán contra una de las torres y la atacarán con toda la vida restante que tengan.\n");
     printf("\nEl juego te habilitará momentos para pensar tu estrategia. Actúa sabiamente.\n");
     esperar();
 }
@@ -423,15 +424,17 @@ void cargar_enemigos(juego_t *juego){
 
 
 //~ Seleccion de mensajes para mostrar al inicio de cada nivel.
-void mostrar_intro(juego_t juego) {
+void mostrar_intro_nivel(juego_t juego) {
     if (primer_nivel(juego)) {
+        esperar();
+        mostrar_ayuda(juego);
         printf("\nLos enemigos vienen por el este! \nPlanean atacar la torre 1. \nSe necesitan %i defensores de las tropas de %c para protegerla\n", ENANOS_INICIALES_PRIMER_NIVEL, ENANOS);
     } else if (segundo_nivel(juego)) {
         printf("\nVienen más orcos! \nAhora se acercan por el oeste para atacar la torre 2! \nPosicione %i defensores de las tropas de %c para detenerlos\n", ELFOS_INICIALES_SEGUND_NIVEL, ELFOS);
     } else if (tercer_nivel(juego)) {
         printf("\nOh no! Los enemigos siguen acercándose, esta vez por el norte. \nPueden atacar las dos torres! Ubique %i defensores de las tropas de %c y %i de %c para protegerlas!\n", ENANOS_INICIALES_TERCER_NIVEL, ENANOS, ELFOS_INICIALES_TERCER_NIVEL, ELFOS);
     } else {
-        printf("\nTodavía hay más?!!! Los enemigos vienen por el sur! \n Se dirigen a ambas torres de nuevo. Ubique %i defensores de las tropas de %c y %i de %c para defenderlas\n", ENANOS_INICIALES_CUARTO_NIVEL, ENANOS, ELFOS_INICIALES_CUARTO_NIVEL, ELFOS);
+        printf("\nTodavía hay más?!!! Los enemigos vienen por el sur! \nSe dirigen a ambas torres de nuevo. Ubique %i defensores de las tropas de %c y %i de %c para defenderlas\n", ENANOS_INICIALES_CUARTO_NIVEL, ENANOS, ELFOS_INICIALES_CUARTO_NIVEL, ELFOS);
     }
     esperar();
 }
@@ -441,7 +444,7 @@ void mostrar_intro(juego_t juego) {
 //~ Pre: Recibe un juego en una nueva instancia.
 //~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos.
 void cargar_nivel(juego_t *juego) {
-    //~ mostrar_intro(*juego);
+    mostrar_intro_nivel(*juego);
     obtener_camino_1(juego);
     obtener_camino_2(juego);
     cargar_enemigos(juego);
@@ -466,6 +469,7 @@ void mostrar_mensaje_final(int estado_juego) {
         }
         printf("\n\n\nGracias por jugar!!\n");
         printf("\n\nEscrito, producido y guionado por %s ;)\n", AUTOR);
+        printf("\nJunio2020.\n");
     }
 }
 
@@ -478,8 +482,6 @@ int main() {
     char animo_legolas;
     char animo_gimli;
     juego_t juego;
-
-    mostrar_ayuda();
 
     animos(&viento, &humedad, &animo_legolas, &animo_gimli);
     inicializar_juego(&juego, viento, humedad, animo_legolas, animo_gimli);

@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <math.h>
 #include "defendiendo_torres.h"
-#include "utiles.h"
 
 #define ENANOS 'G'
 #define ELFOS 'L'
@@ -10,7 +9,7 @@
 #define ENTRADAS 'E'
 #define TORRES 'T'
 #define CAMINO ' '
-#define CELDA_VACIA '-'
+#define CELDA_VACIA '_'
 
 #define PRIMER_NIVEL 1
 #define SEGUND_NIVEL 2
@@ -45,7 +44,7 @@ const int ATAQUE_ENANOS = 60;
 const int ADICIONAL_CRITICO = 40;
 const int NO_ATACO = 0;
 const int DETENER = 1;
-const int DISTANCIA_DE_ATAQUE_ELFOS = 9;
+const int DISTANCIA_DE_ATAQUE_ELFOS = 3;
 const int DISTANCIA_DE_ATAQUE_ENANOS = 2;
 
 const int LIBRE = 1;
@@ -282,14 +281,15 @@ void inicializar_enemigo(enemigo_t *enemigo, int num_camino) {
 }
 
 
+
 //~ Pre: Se recibe una instancia de nivel.
 //~ Pos: Se agrega un enemigo en los caminos que disponga el nivel.
 void agregar_enemigo(nivel_t* nivel) {
-    if ((*nivel).tope_camino_1 > 0) {
+    if ((*nivel).tope_camino_1) {
         inicializar_enemigo((&(*nivel).enemigos[(*nivel).tope_enemigos]), CAMINO_UNO);
         (*nivel).tope_enemigos++;
     }
-    if ((*nivel).tope_camino_2 > 0) {
+    if ((*nivel).tope_camino_2) {
         inicializar_enemigo((&(*nivel).enemigos[(*nivel).tope_enemigos]), CAMINO_DOS);
         (*nivel).tope_enemigos++;
     }
@@ -316,9 +316,17 @@ int elevar_al_cuadrado (int num) {
 
 
 //~ Pre: Recibe un defensor y una coordenada.
-//~ Pos: Devuelve la distancia entre ambas posiciones elevada al cuadrado.
-int distancia_del_camino(defensor_t defensor, coordenada_t coordenada) {
+//~ Pos: Devuelve la distancia entre ambas posiciones, elevada al cuadrado.
+int distancia_al_cuadrado(defensor_t defensor, coordenada_t coordenada) {
     return (elevar_al_cuadrado(defensor.posicion.fil - coordenada.fil) + elevar_al_cuadrado(defensor.posicion.col - coordenada.col));
+}
+
+
+
+//~ Pre: Recibe un defensor y una coordenada.
+//~ Pos: Devuelve la suma de los valores absolutos de la diferencia de las coordenadas.
+int distancia_mahattan(defensor_t defensor, coordenada_t coordenada) {
+    return (abs(defensor.posicion.fil - coordenada.fil) + abs(defensor.posicion.col - coordenada.col));
 }
 
 
@@ -328,7 +336,7 @@ int distancia_del_camino(defensor_t defensor, coordenada_t coordenada) {
 bool en_alcance_de_flecha(defensor_t defensor, coordenada_t coordenada) {
     return (
         es_elfo(defensor.tipo)
-        && distancia_del_camino(defensor, coordenada) <= DISTANCIA_DE_ATAQUE_ELFOS
+        && distancia_mahattan(defensor, coordenada) <= DISTANCIA_DE_ATAQUE_ELFOS
     );
 }
 
@@ -340,7 +348,7 @@ bool en_alcance_de_flecha(defensor_t defensor, coordenada_t coordenada) {
 bool en_alcance_de_hacha(defensor_t defensor, coordenada_t coordenada) {
     return (
         es_enano(defensor.tipo)
-        && distancia_del_camino(defensor, coordenada) <= DISTANCIA_DE_ATAQUE_ENANOS
+        && (distancia_al_cuadrado(defensor, coordenada) <= DISTANCIA_DE_ATAQUE_ENANOS)
     );
 }
 
@@ -368,8 +376,8 @@ bool logra_atacar(juego_t juego, int def, int acierto) {
 //~ Pos: Devuelve true si el critico es compatible con la probabilidad que tiene segun su tipo.
 bool logra_ataque_critico(juego_t juego, int def, int critico) {
     return (
-        (juego.nivel.defensores[def].tipo == ELFOS && critico < juego.critico_legolas)
-        || (juego.nivel.defensores[def].tipo == ENANOS && critico < juego.critico_gimli)
+        (es_elfo(juego.nivel.defensores[def].tipo) && critico < juego.critico_legolas)
+        || (es_enano(juego.nivel.defensores[def].tipo) && critico < juego.critico_gimli)
     );
 }
 
@@ -421,7 +429,7 @@ void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO]
             while (enem < (*juego).nivel.tope_enemigos && !(*detener)) {
                 if (orco_vivo_en_camino((*juego).nivel.enemigos[enem], num_camino, i)) {
                     ataca_orco(juego, def, enem);
-                    if ((*juego).nivel.defensores[def].tipo == ENANOS) *detener = DETENER;
+                    *detener = DETENER;
                 }
                 enem++;
             }
@@ -433,7 +441,7 @@ void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO]
 
 
 //~ Pre: Recibe la instancia de un juego y la posicion de un elfo en el vector defensores.
-//~ Pos: El elfo buscará enemigos en CAMINO_UNO y CAMINO_DOS.
+//~ Pos: El elfo buscará enemigos en CAMINO_UNO y CAMINO_DOS. Atacará a todos a su alcance.
 void ataca_elfo(juego_t *juego, int def) {
     elfo_ataca_camino(juego, (*juego).nivel.camino_1,(*juego).nivel.tope_camino_1, CAMINO_UNO, def);
     elfo_ataca_camino(juego, (*juego).nivel.camino_2,(*juego).nivel.tope_camino_2, CAMINO_DOS, def);
@@ -442,7 +450,7 @@ void ataca_elfo(juego_t *juego, int def) {
 
 
 //~ Pre: Recibe la instancia de juego y la posicion de un enano en el vector defensores.
-//~ Pos: El enano buscará enemigos en CAMINO_UNO y CAMINO_DOS.
+//~ Pos: El enano buscará enemigos en CAMINO_UNO y CAMINO_DOS. Sólo atacará al primero que encuentre a su alrededor.
 void ataca_enano(juego_t *juego, int def) {
     int ataco = NO_ATACO;
     enano_ataca_camino(juego, (*juego).nivel.camino_1,(*juego).nivel.tope_camino_1, CAMINO_UNO, def, &ataco);
@@ -456,7 +464,7 @@ void ataca_enano(juego_t *juego, int def) {
 void atacan_defensores(juego_t *juego, int def) {
     if (def >= (*juego).nivel.tope_defensores) {
         return;
-    } else if ((*juego).nivel.defensores[def].tipo == ELFOS) {
+    } else if (es_elfo((*juego).nivel.defensores[def].tipo)) {
         ataca_elfo(juego, def);
         atacan_defensores(juego, def+1);
     } else {
@@ -471,8 +479,8 @@ void atacan_defensores(juego_t *juego, int def) {
 //~ Pos: Devuelve true si el enemigo llega al final del camino, donde se encuentran una torre.
 bool orco_llega_a_torre(enemigo_t enemigo, nivel_t nivel){
     return (
-        (orco_vivo_en_camino(enemigo, CAMINO_UNO, nivel.tope_camino_1))
-        || (orco_vivo_en_camino(enemigo, CAMINO_DOS, nivel.tope_camino_2))
+        (orco_vivo_en_camino(enemigo, CAMINO_UNO, nivel.tope_camino_1-1))
+        || (orco_vivo_en_camino(enemigo, CAMINO_DOS, nivel.tope_camino_2-1))
     );
 }
 
@@ -495,7 +503,7 @@ void atacan_enemigos(enemigo_t *enemigo, torres_t *torres) {
 void avanzan_enemigos(juego_t *juego) {
     int i;
     for (i = 0; i < (*juego).nivel.tope_enemigos; i++) {
-        if  ((*juego).nivel.enemigos[i].vida > SIN_VIDA){
+        if  (orco_vivo((*juego).nivel.enemigos[i])){
             (*juego).nivel.enemigos[i].pos_en_camino++;
             if (orco_llega_a_torre((*juego).nivel.enemigos[i], (*juego).nivel)) {
                 atacan_enemigos(&((*juego).nivel.enemigos[i]), &(*juego).torres);
@@ -557,6 +565,17 @@ void mostrar_columnas(int tope_col) {
 
 
 
+//~ Imprime el contenido de la celda
+void mostrar_celda(char celda) {
+    printf("%c", celda);
+    if (celda == CELDA_VACIA || celda == CAMINO) printf("%c", celda);
+    else if (celda == ORCOS) printf("%c", CAMINO);
+    else printf(".");
+    printf("|");
+}
+
+
+
 //~ Reconstruye en dos dimensiones la matriz
 void mostrar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS], int tope_fil, int tope_col) {
     int i, j;
@@ -566,8 +585,9 @@ void mostrar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS], int tope_fil, int tope_col
         if (i < 10)
             printf(" ");
         printf("%i|", i);
-        for (j = 0 ; j < tope_col; j++)
-            printf("%c |", mapa[i][j]);
+        for (j = 0 ; j < tope_col; j++) {
+            mostrar_celda(mapa[i][j]);
+        }
         printf("%i\n", i);
     }
     mostrar_columnas(tope_col);
@@ -579,12 +599,29 @@ void mostrar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS], int tope_fil, int tope_col
 //~ Pos: Ubica el recorrido del camino en la matriz.
 void pintar_camino(char mapa[MAX_FILAS][MAX_COLUMNAS], coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino) {
     int i = 0;
-
-    mapa[camino[i].fil][camino[i].col] = ENTRADAS;
     for (i = 1; i < tope_camino-1; i++)
         mapa[camino[i].fil][camino[i].col] = CAMINO;
-    mapa[camino[i].fil][camino[i].col] = TORRES;
 }
+
+
+
+//~ Pos: Ubica las entradas y torres de los caminos en la matriz.
+void pintar_entradas_y_torres(char mapa[MAX_FILAS][MAX_COLUMNAS], nivel_t nivel) {
+    coordenada_t entrada, torre;
+    if (nivel.tope_camino_1) {
+        entrada = nivel.camino_1[0];
+        torre = nivel.camino_1[nivel.tope_camino_1-1];
+        mapa[entrada.fil][entrada.col] = ENTRADAS;
+        mapa[torre.fil][torre.col] = TORRES;
+    }
+    if (nivel.tope_camino_2) {
+        entrada = nivel.camino_2[0];
+        torre = nivel.camino_2[nivel.tope_camino_2-1];
+        mapa[entrada.fil][entrada.col] = ENTRADAS;
+        mapa[torre.fil][torre.col] = TORRES;
+    }
+}
+
 
 
 //~ Pre: Recibe la matriz y la posicion de los enemigos en su camino.
@@ -592,7 +629,7 @@ void pintar_camino(char mapa[MAX_FILAS][MAX_COLUMNAS], coordenada_t camino[MAX_L
 void pintar_enemigos(char mapa[MAX_FILAS][MAX_COLUMNAS], coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, enemigo_t enemigos[MAX_ENEMIGOS], int tope_enemigos, int num_camino) {
     int pos, i;
 
-    for (pos = 1; pos < tope_camino-1; pos++){
+    for (pos = 0; pos < tope_camino; pos++){
         for (i = 0; i< tope_enemigos; i++) {
             if (orco_vivo_en_camino(enemigos[i], num_camino, pos))
                 mapa[camino[pos].fil][camino[pos].col] = ORCOS;
@@ -615,7 +652,7 @@ void pintar_defensores(char mapa[MAX_FILAS][MAX_COLUMNAS], nivel_t nivel) {
 
 
 
-//~ Muestra un encabezado sobre el mapa con el nivel.
+//~ Muestra un encabezado sobre el mapa.
 void mostrar_encabezado(juego_t juego) {
     if (juego.nivel_actual == PRIMER_NIVEL || juego.nivel_actual == SEGUND_NIVEL)
         printf(ENCABEZADO_A);
@@ -642,8 +679,8 @@ void mostrar_encabezado(juego_t juego) {
 //~ Muestra informacion sobre las torres, los defensores extra y los enemigos.
 void mostrar_informacion(juego_t juego) {
     printf("\nResistencia Torre 2: %i \tResistencia Torre 1: %i\n", juego.torres.resistencia_torre_2, juego.torres.resistencia_torre_1);
-    printf("Elfos extra: %i \tEnanos extra: %i\n", juego.torres.elfos_extra, juego.torres.enanos_extra);
-    printf("Enemigos: %i \tEnemigos restantes: %i\n", juego.nivel.tope_enemigos, (juego.nivel.max_enemigos_nivel-juego.nivel.tope_enemigos));
+    printf("Elfos extra: %i           \tEnanos extra: %i\n", juego.torres.elfos_extra, juego.torres.enanos_extra);
+    printf("Enemigos: %i              \tEnemigos restantes: %i\n", juego.nivel.tope_enemigos, (juego.nivel.max_enemigos_nivel-juego.nivel.tope_enemigos));
 }
 
 
@@ -663,6 +700,7 @@ void mostrar_juego(juego_t juego) {
 
     pintar_enemigos(mapa, juego.nivel.camino_1, juego.nivel.tope_camino_1, juego.nivel.enemigos, juego.nivel.tope_enemigos, CAMINO_UNO);
     pintar_enemigos(mapa, juego.nivel.camino_2, juego.nivel.tope_camino_2, juego.nivel.enemigos, juego.nivel.tope_enemigos, CAMINO_DOS);
+    pintar_entradas_y_torres(mapa, juego.nivel);
     pintar_defensores(mapa, juego.nivel);
     printf("\n");
 

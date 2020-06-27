@@ -43,7 +43,7 @@ const int ATAQUE_ELFOS = 30;
 const int ATAQUE_ENANOS = 60;
 const int ADICIONAL_CRITICO = 40;
 const int NO_ATACO = 0;
-const int DETENER = 1;
+const int ATACO = 1;
 const int DISTANCIA_DE_ATAQUE_ELFOS = 3;
 const int DISTANCIA_DE_ATAQUE_ENANOS = 2;
 
@@ -77,7 +77,7 @@ void inicializar_torres(torres_t* torres) {
 
 
 
-//~ Pre: Recibe el ánimo de uno de los lideres.
+//~ Pre: Recibe el ánimo de uno de los lideres, pudiendo ser BUENO, REGULAR o MALO.
 //~ Pos: Genera el porcetaje de probabilidad de dar un ataque crítico.
 int critico_segun_animo(char animo) {
     int critico;
@@ -93,7 +93,7 @@ int critico_segun_animo(char animo) {
 
 
 
-//~ Pre: Recibe el estado del tiempo.
+//~ Pre: Recibe el estado del tiempo, ya sea de la velocidad del viento o de la humedad.
 //~ Pos: Genera el porcentaje de fallo de los defensores, afectados por las condiciones meteorologicas.
 int fallo_segun_tiempo(int tiempo) {
     int fallo;
@@ -131,7 +131,7 @@ bool orco_vivo(enemigo_t enemigo) {
 
 
 
-//~ Pre: Recibe la cantidad de enemigos restantes en el nivel.
+//~ Pre: Recibe un nivel con enemigos y la cantidad de max_enemigos_nivel que se espera vencer.
 //~ Pos: Devuelve true cuando todos los enemigos de un nivel fueron vencidos.
 bool nivel_superado(nivel_t nivel) {
     int i = 0, orcos_con_vida = nivel.max_enemigos_nivel;
@@ -173,7 +173,7 @@ int estado_nivel(nivel_t nivel) {
 
 
 
-//~ Pre: Recibe las coordenadas de cada componente en el mapa.
+//~ Pre: Recibe las coordenadas de cada componente en el mapa, ya sean defensores existentes o caminos.
 //~ Pos: Son acumuladas en un vector posiciones.
 void obtener_posiciones(nivel_t nivel, coordenada_t posiciones[], int tope_posiciones) {
     int i, j, k;
@@ -200,8 +200,8 @@ int posiciones_reservadas(nivel_t nivel) {
 
 
 //~ Pre: Recibe dos coordenadas.
-//~ Pos: Devuelve la diferencia de fil de ambas, y si coincide, la de col.
-int diferencia_de_coordenadas(coordenada_t coor_1, coordenada_t coor_2) {
+//~ Pos: Devuelve positivo si la primera coordenada tiene un valor mayor a la segunda coordenada, y negativo si es al revés. Compara primero filas y si coinciden, columnas. Devuelve 0 cuando son iguales.
+int comparacion_de_coordenadas(coordenada_t coor_1, coordenada_t coor_2) {
     if (coor_1.fil < coor_2.fil)
         return -1;
     else if (coor_1.fil > coor_2.fil)
@@ -211,14 +211,14 @@ int diferencia_de_coordenadas(coordenada_t coor_1, coordenada_t coor_2) {
 }
 
 
-//~ Pre: Recibe un vector con las posiciones ocupadas y la cual se desee conocer su estado de disponibilidad.
-//~ Pos: Devuelve 0 cuando la posicion se encuentra disponible y -1 cuando esta ocupada.
+//~ Pre: Recibe un vector con las posiciones ocupadas y una coordenada la cual se desee conocer su estado de disponibilidad.
+//~ Pos: Devuelve LIBRE cuando la posicion se encuentra disponible y NO_LIBRE cuando esta ocupada.
 int posicion_disponible(coordenada_t posiciones[MAX_LONGITUD_CAMINO], int tope_posiciones, coordenada_t posicion) {
     int i = 0;
     int estado = LIBRE;
 
     while ((i < tope_posiciones) && (estado==LIBRE)) {
-        if (!diferencia_de_coordenadas(posiciones[i], posicion))
+        if (!comparacion_de_coordenadas(posiciones[i], posicion))
             estado = NO_LIBRE;
         i++;
     }
@@ -227,7 +227,7 @@ int posicion_disponible(coordenada_t posiciones[MAX_LONGITUD_CAMINO], int tope_p
 
 
 
-//~ Pre: Recibe un tipo.
+//~ Pre: Recibe un tipo para un defensor.
 //~ Pos: Devuelve true si es parte de los ENANOS.
 bool es_enano(char tipo) {
     return tipo == ENANOS;
@@ -235,7 +235,7 @@ bool es_enano(char tipo) {
 
 
 
-//~ Pre: Recibe un tipo.
+//~ Pre: Recibe un tipo para un defensor.
 //~ Pos: Devuelve true si es parte de los ELFOS.
 bool es_elfo(char tipo) {
     return tipo == ELFOS;
@@ -244,7 +244,7 @@ bool es_elfo(char tipo) {
 
 
 //~ Pre: Recibe la posicion y el tipo de un nuevo defensor.
-//~ Pos: Inicializa al defensor con su posicion, su tipo y su fuerza_ataque.
+//~ Pos: Inicializa al defensor en su posicion, con su tipo y su fuerza_ataque.
 void inicializar_defensor(defensor_t *defensor, coordenada_t posicion, char tipo){
     (*defensor).posicion = posicion;
     (*defensor).tipo = tipo;
@@ -277,7 +277,7 @@ int agregar_defensor(nivel_t* nivel, coordenada_t posicion, char tipo) {
 void inicializar_enemigo(enemigo_t *enemigo, int num_camino) {
     (*enemigo).camino = num_camino;
     (*enemigo).pos_en_camino = POSICION_INICIAL;
-    (*enemigo).vida = VIDA_INICIAL + rand() % VIDA_EXTRA;
+    (*enemigo).vida = VIDA_INICIAL + (rand() % VIDA_EXTRA + 1);
 }
 
 
@@ -297,8 +297,8 @@ void agregar_enemigo(nivel_t* nivel) {
 
 
 
-//~ Pre: Recibe el registro de un enemigo, una referencia al camino de interes y un punto de este
-//~ Pos: Devuelve true si el enemigo se encuentra en tal camino, en aquella posicion y con vida
+//~ Pre: Recibe el registro de un enemigo, una referencia al camino de interes y un punto de este.
+//~ Pos: Devuelve true si el enemigo se encuentra en tal camino, en aquella posicion y con vida.
 bool orco_vivo_en_camino(enemigo_t enemigo, int camino, int posicion){
     return (
         orco_vivo(enemigo)
@@ -309,7 +309,7 @@ bool orco_vivo_en_camino(enemigo_t enemigo, int camino, int posicion){
 
 
 //~ Eleva al cuadrado un número entero.
-int elevar_al_cuadrado (int num) {
+int elevado_al_cuadrado(int num) {
     return num * num;
 }
 
@@ -318,25 +318,25 @@ int elevar_al_cuadrado (int num) {
 //~ Pre: Recibe un defensor y una coordenada.
 //~ Pos: Devuelve la distancia entre ambas posiciones, elevada al cuadrado.
 int distancia_al_cuadrado(defensor_t defensor, coordenada_t coordenada) {
-    return (elevar_al_cuadrado(defensor.posicion.fil - coordenada.fil) + elevar_al_cuadrado(defensor.posicion.col - coordenada.col));
+    return (elevado_al_cuadrado(defensor.posicion.fil - coordenada.fil) + elevado_al_cuadrado(defensor.posicion.col - coordenada.col));
 }
 
 
 
 //~ Pre: Recibe un defensor y una coordenada.
 //~ Pos: Devuelve la suma de los valores absolutos de la diferencia de las coordenadas.
-int distancia_mahattan(defensor_t defensor, coordenada_t coordenada) {
+int distancia_manhattan(defensor_t defensor, coordenada_t coordenada) {
     return (abs(defensor.posicion.fil - coordenada.fil) + abs(defensor.posicion.col - coordenada.col));
 }
 
 
 
 //~ Pre: Recibe un defensor y una coordenada.
-//~ Pos: Devuelve true si el defensor es_elfo, y la coordenada se encuentra en el alcance de su ataque.
+//~ Pos: Devuelve true si el defensor es_elfo y la coordenada se encuentra en el alcance de su ataque.
 bool en_alcance_de_flecha(defensor_t defensor, coordenada_t coordenada) {
     return (
         es_elfo(defensor.tipo)
-        && distancia_mahattan(defensor, coordenada) <= DISTANCIA_DE_ATAQUE_ELFOS
+        && distancia_manhattan(defensor, coordenada) <= DISTANCIA_DE_ATAQUE_ELFOS
     );
 }
 
@@ -344,7 +344,7 @@ bool en_alcance_de_flecha(defensor_t defensor, coordenada_t coordenada) {
 
 
 //~ Pre: Recibe un defensor y una coordenada.
-//~ Pos: Devuelve true si el defensor es_enano, y la coordenada se encuentra en el alcance de su ataque.
+//~ Pos: Devuelve true si el defensor es_enano y la coordenada se encuentra en el alcance de su ataque.
 bool en_alcance_de_hacha(defensor_t defensor, coordenada_t coordenada) {
     return (
         es_enano(defensor.tipo)
@@ -361,7 +361,7 @@ int porcentaje_aleatorio() {
 
 
 
-//~ Pre: Recibe la instancia de un juego, la posicion en el vector de defensores de un def, y el grado de acierto de su ataque.
+//~ Pre: Recibe la instancia de un juego, def indica un defensor del nivel, y acierto es la probabilidad de dar un ataque.
 //~ Pos: Devuelve true si el acierto es mayor al grado de fallo que tiene según su tipo.
 bool logra_atacar(juego_t juego, int def, int acierto) {
     return (
@@ -372,7 +372,7 @@ bool logra_atacar(juego_t juego, int def, int acierto) {
 
 
 
-//~ Pre: Recibe la instancia de un juego, la posicion en el vector de defensores de un def, y la probabilidad de dar un critico.
+//~ Pre: Recibe la instancia de un juego, def corresponde a un defensor, y recibe la probabilidad de dar un ataque critico.
 //~ Pos: Devuelve true si el critico es compatible con la probabilidad que tiene segun su tipo.
 bool logra_ataque_critico(juego_t juego, int def, int critico) {
     return (
@@ -399,8 +399,8 @@ void ataca_orco(juego_t *juego, int def, int enem) {
 
 
 
-//~ Pre: Recibe la instancia de juego, un camino y la posicion de un elfo en el vector defensores.
-//~ Pos: Busca enemigos con vida en su alcance. Si lo encuentra, lo ataca.
+//~ Pre: Recibe la instancia de juego, un camino y a uno de los elfos defensores.
+//~ Pos: Busca enemigos con vida cerca del elfo. Si lo encuentra, intentará atacarlo.
 void elfo_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino, int def) {
     int i = 0, enem;
     while (i < tope_camino) {
@@ -419,17 +419,17 @@ void elfo_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO],
 
 
 
-//~ Pre: Recibe la instancia de juego, un camino y la posicion de un enano en el vector defensores.
-//~ Pos: Busca enemigos con vida en su alcance. Si lo encuentra lo ataca. Sólo ataca 1 vez.
-void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino, int def, int *detener) {
+//~ Pre: Recibe la instancia de juego, un camino y a uno de los enanos defensores.
+//~ Pos: Busca enemigos con vida cerca del enano. Si lo encuentra, intentará atacarlo. Sólo ataca 1 vez.
+void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino, int def, int *ha_atacado) {
     int i = 0, enem;
-    while (i < tope_camino && !(*detener)) {
+    while (i < tope_camino && !(*ha_atacado)) {
         if (en_alcance_de_hacha((*juego).nivel.defensores[def], camino[i])) {
             enem = 0;
-            while (enem < (*juego).nivel.tope_enemigos && !(*detener)) {
+            while (enem < (*juego).nivel.tope_enemigos && !(*ha_atacado)) {
                 if (orco_vivo_en_camino((*juego).nivel.enemigos[enem], num_camino, i)) {
                     ataca_orco(juego, def, enem);
-                    *detener = DETENER;
+                    *ha_atacado = ATACO;
                 }
                 enem++;
             }
@@ -440,8 +440,8 @@ void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO]
 
 
 
-//~ Pre: Recibe la instancia de un juego y la posicion de un elfo en el vector defensores.
-//~ Pos: El elfo buscará enemigos en CAMINO_UNO y CAMINO_DOS. Atacará a todos a su alcance.
+//~ Pre: Recibe la instancia de un juego y a uno de los elfos defensores.
+//~ Pos: El elfo buscará enemigos en CAMINO_UNO y CAMINO_DOS. Atacará a todos los que estén a su alcance.
 void ataca_elfo(juego_t *juego, int def) {
     elfo_ataca_camino(juego, (*juego).nivel.camino_1,(*juego).nivel.tope_camino_1, CAMINO_UNO, def);
     elfo_ataca_camino(juego, (*juego).nivel.camino_2,(*juego).nivel.tope_camino_2, CAMINO_DOS, def);
@@ -449,7 +449,7 @@ void ataca_elfo(juego_t *juego, int def) {
 
 
 
-//~ Pre: Recibe la instancia de juego y la posicion de un enano en el vector defensores.
+//~ Pre: Recibe la instancia de juego y a uno de los enanos defensores.
 //~ Pos: El enano buscará enemigos en CAMINO_UNO y CAMINO_DOS. Sólo atacará al primero que encuentre a su alrededor.
 void ataca_enano(juego_t *juego, int def) {
     int ataco = NO_ATACO;
@@ -476,7 +476,7 @@ void atacan_defensores(juego_t *juego, int def) {
 
 
 //~ Pre: Recibe un enemigo y las estructuras de un nivel.
-//~ Pos: Devuelve true si el enemigo llega al final del camino, donde se encuentran una torre.
+//~ Pos: Devuelve true si el enemigo llega con vida al final del camino, donde se encuentran una torre.
 bool orco_llega_a_torre(enemigo_t enemigo, nivel_t nivel){
     return (
         (orco_vivo_en_camino(enemigo, CAMINO_UNO, nivel.tope_camino_1-1))
@@ -486,7 +486,7 @@ bool orco_llega_a_torre(enemigo_t enemigo, nivel_t nivel){
 
 
 
-//~ Pre: Recibe un enemigo y la torre a la que atacará cuando llega a esta.
+//~ Pre: Recibe un enemigo y la torre a la que atacará.
 //~ Pos: La ataca con toda su vida y muere.
 void atacan_enemigos(enemigo_t *enemigo, torres_t *torres) {
     if ((*enemigo).camino == CAMINO_UNO) {
@@ -499,7 +499,7 @@ void atacan_enemigos(enemigo_t *enemigo, torres_t *torres) {
 
 
 
-//~ Todos los enemigos con vida avanzan 1 posicion
+//~ Todos los enemigos con vida avanzan 1 posición
 void avanzan_enemigos(juego_t *juego) {
     int i;
     for (i = 0; i < (*juego).nivel.tope_enemigos; i++) {
@@ -595,11 +595,11 @@ void mostrar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS], int tope_fil, int tope_col
 
 
 
-//~ Pre: Recibe una matriz vacía y uno de los caminos.
+//~ Pre: Recibe una matriz "vacía" y uno de los caminos.
 //~ Pos: Ubica el recorrido del camino en la matriz.
 void pintar_camino(char mapa[MAX_FILAS][MAX_COLUMNAS], coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino) {
-    int i = 0;
-    for (i = 1; i < tope_camino-1; i++)
+    int i;
+    for (i = 0; i < tope_camino; i++)
         mapa[camino[i].fil][camino[i].col] = CAMINO;
 }
 
@@ -693,11 +693,8 @@ void mostrar_juego(juego_t juego) {
     definir_dimensiones(juego.nivel_actual, &tope_fil, &tope_col);
     generar_mapa(mapa, tope_fil, tope_col);
 
-    if (juego.nivel.tope_camino_1)
-        pintar_camino(mapa, juego.nivel.camino_1, juego.nivel.tope_camino_1, CAMINO_UNO);
-    if (juego.nivel.tope_camino_2)
-        pintar_camino(mapa, juego.nivel.camino_2, juego.nivel.tope_camino_2, CAMINO_DOS);
-
+    pintar_camino(mapa, juego.nivel.camino_1, juego.nivel.tope_camino_1, CAMINO_UNO);
+    pintar_camino(mapa, juego.nivel.camino_2, juego.nivel.tope_camino_2, CAMINO_DOS);
     pintar_enemigos(mapa, juego.nivel.camino_1, juego.nivel.tope_camino_1, juego.nivel.enemigos, juego.nivel.tope_enemigos, CAMINO_UNO);
     pintar_enemigos(mapa, juego.nivel.camino_2, juego.nivel.tope_camino_2, juego.nivel.enemigos, juego.nivel.tope_enemigos, CAMINO_DOS);
     pintar_entradas_y_torres(mapa, juego.nivel);

@@ -79,8 +79,8 @@ void mostrar_ayuda() {
     printf("\nLa torre 2 esta a cuidado de Legolas. Tiene 600 puntos de resistencia y en ella hay 10 elfos extra que te podran ayudar, si los necesitas.\n");
     printf("\nLos Orcos se dirigen desde una Entrada a una sola de las Torres por un camino.\n");
     printf("\nUn G puede atacar a un enemigo por turno y solo aquellos que lo rodean.\n");
-    printf("\nLos ataques pueden fallar, como también pueden ser críticos o no.\n");
     printf("\nUn L puede atacar a varios enemigos por turno si están a 3 celdas de distancia.\n");
+    printf("\nLos ataques pueden fallar, como también pueden ser críticos o no.\n");
     printf("\nLos O no se detienen a luchar. Irán contra una de las torres y la atacarán con toda la vida restante que tengan.\n");
     printf("\nEl juego te habilitará momentos para pensar tu estrategia. Actúa sabiamente.\n");
     esperar();
@@ -121,7 +121,7 @@ bool cuarto_nivel(juego_t juego) {
 
 
 //~ Pre: Recibe un numero de fila y un numero de columna para una matriz.
-//~ Pos: Inicializa una coordenada para la matriz.
+//~ Pos: Inicializa una coordenada.
 void ubicar(coordenada_t *coordenada, int fil, int col){
     (*coordenada).fil = fil;
     (*coordenada).col = col;
@@ -142,7 +142,7 @@ void conseguir_rango(int *min, int *max, int nivel) {
 
 
 
-//~ Pre: Recibe un numero ingresado por el usuario y un rango.
+//~ Pre: Recibe un numero ingresado por el usuario y un rango adecuado al nivel.
 //~ Pos: Devuelve true si se encuentra entre los valores válidos que puede tomar una coordenada.
 bool esta_en_rango(int num, int min, int max) {
     return (num >= min && num <= max);
@@ -151,7 +151,7 @@ bool esta_en_rango(int num, int min, int max) {
 
 
 //~ Pre: Recibe un numero de nivel y una coordenada sin inicializar.
-//~ Pos: Inicializa la coordenada con valores válidos ingresados por el usuario, en función del nivel que se esté jugando.
+//~ Pos: Inicializa la coordenada con valores válidos ingresados por el usuario, adecuados al nivel del juego.
 void pedir_coordenada(coordenada_t *coordenada, int nivel) {
     int fil, col, min, max;
     conseguir_rango(&min, &max, nivel);
@@ -175,7 +175,7 @@ void pedir_coordenada(coordenada_t *coordenada, int nivel) {
 
 
 //~ Pre: Recibe un juego en un nuevo nivel por inicializar.
-//~ Pos: Ubica la entrada los enemigos que atacaran a la torre 1 y la ubicacion de esta. Genera el camino 1.
+//~ Pos: Ubica la entrada los enemigos que atacaran a la torre 1 y la ubicación de esta. Genera el camino 1.
 void obtener_camino_1(juego_t *juego) {
     coordenada_t entrada_1, torre_1;
 
@@ -201,7 +201,7 @@ void obtener_camino_1(juego_t *juego) {
 
 
 //~ Pre: Recibe un juego en un nuevo nivel por inicializar.
-//~ Pos: Ubica la entrada los enemigos que atacaran a la torre 2 y la ubicacion de esta. Genera el camino 2.
+//~ Pos: Ubica la entrada los enemigos que atacaran a la torre 2 y la ubicación de esta. Genera el camino 2.
 void obtener_camino_2(juego_t *juego) {
     coordenada_t entrada_2, torre_2;
 
@@ -245,7 +245,7 @@ void agregar_defensores_iniciales(juego_t *juego, int cantidad, char tipo) {
 
 
 
-//~ Pre: Recibe un juego en nuevo nivel por inicializar y las indicaciones de defensores iniciales por añadirse.
+//~ Pre: Recibe un juego en nuevo nivel por inicializar y las indicaciones de defensores iniciales para añadirse.
 //~ Pos: Inicializa todos los defensores iniciales.
 void cargar_defensores_iniciales(juego_t *juego) {
     (*juego).nivel.tope_defensores = SIN_DEFENSORES;
@@ -330,8 +330,8 @@ bool es_tipo_valido(char tipo, juego_t juego) {
 }
 
 
-//~ Pre: Recibe una instancia de un juego y una variable tipo sin inicializar.
-//~ Pos: El usuario ingresa tipo valido, para agregar un defensor o ignorar el mensaje.
+//~ Pre: Recibe una instancia de juego y un tipo de defensor sin inicializar.
+//~ Pos: El usuario ingresa un tipo valido, para agregar un defensor o ignorar el mensaje.
 void pedir_tipo(juego_t juego, char *tipo) {
     bool hay_enanos_disponibles = puede_agregar_enanos(juego);
     bool hay_elfos_disponibles = puede_agregar_elfos(juego);
@@ -423,7 +423,7 @@ void cargar_enemigos(juego_t *juego){
 
 
 
-//~ Seleccion de mensajes para mostrar al inicio de cada nivel.
+//~ Selección de mensajes para mostrar al inicio de cada nivel.
 void mostrar_intro_nivel(juego_t juego) {
     if (primer_nivel(juego)) {
         esperar();
@@ -442,7 +442,7 @@ void mostrar_intro_nivel(juego_t juego) {
 
 
 //~ Pre: Recibe un juego en una nueva instancia.
-//~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos.
+//~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos. Introduce el nivel con un mensaje.
 void cargar_nivel(juego_t *juego) {
     mostrar_intro_nivel(*juego);
     obtener_camino_1(juego);
@@ -454,7 +454,7 @@ void cargar_nivel(juego_t *juego) {
 
 
 //~ Pre: Recibe el estado del juego una vez finalizado.
-//~ Pos: Muestra un mensaje segun el estado GANADO o PERDIDO.
+//~ Pos: Muestra un mensaje según el estado GANADO o PERDIDO.
 void mostrar_mensaje_final(int estado_juego) {
     for (int i=MAXIMO_MATRIZ_MAYOR; i>=0; i--) {
         detener_el_tiempo(DELAY);

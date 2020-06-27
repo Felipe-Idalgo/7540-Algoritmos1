@@ -79,7 +79,7 @@ void mostrar_ayuda() {
     printf("\nLa torre 2 esta a cuidado de Legolas. Tiene 600 puntos de resistencia y en ella hay 10 elfos extra que te podran ayudar, si los necesitas.\n");
     printf("\nLos Orcos se dirigen desde una Entrada a una sola de las Torres por un camino.\n");
     printf("\nUn G puede atacar a un enemigo por turno y solo aquellos que lo rodean.\n");
-    printf("\nUn L puede atacar a varios enemigos por turno si están a 3 celdas de distancia.\n");
+    printf("\nUn L puede atacar a varios enemigos por turno si están a 3 o menos celdas de distancia.\n");
     printf("\nLos ataques pueden fallar, como también pueden ser críticos o no.\n");
     printf("\nLos O no se detienen a luchar. Irán contra una de las torres y la atacarán con toda la vida restante que tengan.\n");
     printf("\nEl juego te habilitará momentos para pensar tu estrategia. Actúa sabiamente.\n");
@@ -133,11 +133,10 @@ void ubicar(coordenada_t *coordenada, int fil, int col){
 //~ Pos: Obtiene los mínimos y máximos de los valores que puede tomar una coordenada en determinado nivel.
 void conseguir_rango(int *min, int *max, int nivel) {
     *min = MINIMO_MATRIZ;
-    if (nivel == PRIMER_NIVEL || nivel == SEGUND_NIVEL) {
-            *max = MAXIMO_MATRIZ_MENOR;
-    } else {
-            *max = MAXIMO_MATRIZ_MAYOR;
-    }
+    if (nivel == PRIMER_NIVEL || nivel == SEGUND_NIVEL)
+        *max = MAXIMO_MATRIZ_MENOR;
+    else
+        *max = MAXIMO_MATRIZ_MAYOR;
 }
 
 
@@ -180,20 +179,20 @@ void obtener_camino_1(juego_t *juego) {
     coordenada_t entrada_1, torre_1;
 
     if (primer_nivel(*juego)) {
-            ubicar(&entrada_1, MAXIMO_MATRIZ_MENOR / 2, MAXIMO_MATRIZ_MENOR);
-            ubicar(&torre_1, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
+        ubicar(&entrada_1, MAXIMO_MATRIZ_MENOR / 2, MAXIMO_MATRIZ_MENOR);
+        ubicar(&torre_1, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
 
     } else if (segundo_nivel(*juego)) {
         (*juego).nivel.tope_camino_1 = SIN_CAMINO;
         return;
 
     } else if (tercer_nivel(*juego)) {
-            ubicar(&entrada_1, MINIMO_MATRIZ, AL_ESTE);
-            ubicar(&torre_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
+        ubicar(&entrada_1, MINIMO_MATRIZ, AL_ESTE);
+        ubicar(&torre_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
 
     } else {
-            ubicar(&entrada_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
-            ubicar(&torre_1, MINIMO_MATRIZ, AL_ESTE);
+        ubicar(&entrada_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
+        ubicar(&torre_1, MINIMO_MATRIZ, AL_ESTE);
     }
     obtener_camino((*juego).nivel.camino_1, &((*juego).nivel.tope_camino_1), entrada_1, torre_1);
 }
@@ -210,16 +209,16 @@ void obtener_camino_2(juego_t *juego) {
         return;
 
     } else if (segundo_nivel(*juego)) {
-            ubicar(&entrada_2, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
-            ubicar(&torre_2, MAXIMO_MATRIZ_MENOR / 2, MAXIMO_MATRIZ_MENOR);
+        ubicar(&entrada_2, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
+        ubicar(&torre_2, MAXIMO_MATRIZ_MENOR / 2, MAXIMO_MATRIZ_MENOR);
 
     } else if (tercer_nivel(*juego)) {
-            ubicar(&entrada_2, MINIMO_MATRIZ, AL_OESTE);
-            ubicar(&torre_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
+        ubicar(&entrada_2, MINIMO_MATRIZ, AL_OESTE);
+        ubicar(&torre_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
 
     } else {
-            ubicar(&entrada_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
-            ubicar(&torre_2, MINIMO_MATRIZ, AL_OESTE);
+        ubicar(&entrada_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
+        ubicar(&torre_2, MINIMO_MATRIZ, AL_OESTE);
     }
     obtener_camino((*juego).nivel.camino_2, &((*juego).nivel.tope_camino_2), entrada_2, torre_2);
 }
@@ -309,11 +308,11 @@ bool se_puede_agregar_extra(juego_t juego) {
     bool primera_condicion = hay_extra_disponible(juego);
     bool segunda_condicion = juego.nivel.tope_enemigos > 0 && juego.nivel.tope_enemigos < juego.nivel.max_enemigos_nivel;
     bool tercera_condicion;
-    if (primer_nivel(juego)) {
+    if (primer_nivel(juego))
         tercera_condicion = juego.nivel.tope_enemigos % ORCOS_PARA_AGREGAR_ENANO == 0;
-    } else {
+    else
         tercera_condicion = juego.nivel.tope_enemigos % ORCOS_PARA_AGREGAR_DEFENSOR == 0;
-    }
+
     return (primera_condicion && segunda_condicion && tercera_condicion);
 }
 
@@ -410,15 +409,14 @@ void agregar_defensor_extra(juego_t *juego) {
 void cargar_enemigos(juego_t *juego){
     (*juego).nivel.tope_enemigos = SIN_ENEMIGOS;
 
-    if (primer_nivel(*juego)) {
+    if (primer_nivel(*juego))
         (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_PRIMER_NIVEL;
-    } else if (segundo_nivel(*juego)) {
+    else if (segundo_nivel(*juego))
         (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_SEGUND_NIVEL;
-    } else if (tercer_nivel(*juego)) {
+    else if (tercer_nivel(*juego))
         (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_TERCER_NIVEL;
-    } else {
+    else
         (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_CUARTO_NIVEL;
-    }
 }
 
 
@@ -459,14 +457,13 @@ void mostrar_mensaje_final(int estado_juego) {
     for (int i=MAXIMO_MATRIZ_MAYOR; i>=0; i--) {
         detener_el_tiempo(DELAY);
         system("clear");
-        for (int j = i; j>=0; j--) {
+        for (int j = i; j>=0; j--)
             printf("\n");
-        }
-        if (estado_juego == GANADO) {
+        if (estado_juego == GANADO)
             printf("FELICIDADES! HAS COMPLETADO EL JUEGO CON ÉXITO\n");
-        } else {
+        else
             printf("Una de las torres ha caído...\nGame over\n");
-        }
+
         printf("\n\n\nGracias por jugar!!\n");
         printf("\n\nEscrito, producido y guionado por %s ;)\n", AUTOR);
         printf("\nJunio2020.\n");

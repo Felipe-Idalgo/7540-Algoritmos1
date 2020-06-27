@@ -80,15 +80,11 @@ void inicializar_torres(torres_t* torres) {
 //~ Pre: Recibe el ánimo de uno de los lideres, pudiendo ser BUENO, REGULAR o MALO.
 //~ Pos: Genera el porcetaje de probabilidad de dar un ataque crítico.
 int critico_segun_animo(char animo) {
-    int critico;
-    if (animo == BUENO) {
-        critico = CRITICO_BUENO;
-    } else if (animo == REGULAR) {
-        critico = CRITICO_REGULAR;
-    } else {
-        critico = CRITICO_MALO;
-    }
-    return critico;
+    if (animo == BUENO)
+        return CRITICO_BUENO;
+    else if (animo == REGULAR)
+        return CRITICO_REGULAR;
+    return CRITICO_MALO;
 }
 
 
@@ -137,7 +133,7 @@ bool nivel_superado(nivel_t nivel) {
     int i = 0, orcos_con_vida = nivel.max_enemigos_nivel;
     while (i < nivel.tope_enemigos && orcos_con_vida) {
         if (!orco_vivo(nivel.enemigos[i]))
-            orcos_con_vida --;
+            orcos_con_vida--;
         i++;
     }
     return !orcos_con_vida;
@@ -178,15 +174,14 @@ int estado_nivel(nivel_t nivel) {
 void obtener_posiciones(nivel_t nivel, coordenada_t posiciones[], int tope_posiciones) {
     int i, j, k;
 
-    for (i = 0; i < nivel.tope_camino_1; i++) {
+    for (i = 0; i < nivel.tope_camino_1; i++)
         posiciones[i] = nivel.camino_1[i];
-    }
-    for (j = 0; j < nivel.tope_camino_2; j++) {
+
+    for (j = 0; j < nivel.tope_camino_2; j++)
         posiciones[i+j] = nivel.camino_2[j];
-    }
-    for (k = 0; k < nivel.tope_defensores; k++) {
+
+    for (k = 0; k < nivel.tope_defensores; k++)
         posiciones[i+j+k] = nivel.defensores[k].posicion;
-    }
 };
 
 
@@ -391,9 +386,8 @@ void ataca_orco(juego_t *juego, int def, int enem) {
     critico = porcentaje_aleatorio();
     if (logra_atacar(*juego, def, acierto)) {
         (*juego).nivel.enemigos[enem].vida -= (*juego).nivel.defensores[def].fuerza_ataque;
-        if (logra_ataque_critico(*juego, def, critico)) {
+        if (logra_ataque_critico(*juego, def, critico))
             (*juego).nivel.enemigos[enem].vida -= ADICIONAL_CRITICO;
-        }
     }
 }
 
@@ -407,9 +401,8 @@ void elfo_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO],
         if (en_alcance_de_flecha((*juego).nivel.defensores[def], camino[i])) {
             enem = 0;
             while (enem < (*juego).nivel.tope_enemigos) {
-                if (orco_vivo_en_camino((*juego).nivel.enemigos[enem], num_camino, i)) {
+                if (orco_vivo_en_camino((*juego).nivel.enemigos[enem], num_camino, i))
                     ataca_orco(juego, def, enem);
-                }
                 enem++;
             }
         }
@@ -486,28 +479,26 @@ bool orco_llega_a_torre(enemigo_t enemigo, nivel_t nivel){
 
 
 
-//~ Pre: Recibe un enemigo y la torre a la que atacará.
+//~ Pre: Recibe un enemigo en una torre.
 //~ Pos: La ataca con toda su vida y muere.
-void atacan_enemigos(enemigo_t *enemigo, torres_t *torres) {
-    if ((*enemigo).camino == CAMINO_UNO) {
+void ataca_enemigo(enemigo_t *enemigo, torres_t *torres) {
+    if ((*enemigo).camino == CAMINO_UNO)
         (*torres).resistencia_torre_1 -= (*enemigo).vida;
-    } else {
+    else
         (*torres).resistencia_torre_2 -= (*enemigo).vida;
-    }
     (*enemigo).vida = SIN_VIDA;
 }
 
 
 
-//~ Todos los enemigos con vida avanzan 1 posición
+//~ Todos los enemigos con vida avanzan 1 posición y si llega uno a la torre, la ataca.
 void avanzan_enemigos(juego_t *juego) {
     int i;
     for (i = 0; i < (*juego).nivel.tope_enemigos; i++) {
-        if  (orco_vivo((*juego).nivel.enemigos[i])){
+        if (orco_vivo((*juego).nivel.enemigos[i])){
             (*juego).nivel.enemigos[i].pos_en_camino++;
-            if (orco_llega_a_torre((*juego).nivel.enemigos[i], (*juego).nivel)) {
-                atacan_enemigos(&((*juego).nivel.enemigos[i]), &(*juego).torres);
-            }
+            if (orco_llega_a_torre((*juego).nivel.enemigos[i], (*juego).nivel))
+                ataca_enemigo(&((*juego).nivel.enemigos[i]), &(*juego).torres);
         }
     }
 }
@@ -518,9 +509,8 @@ void avanzan_enemigos(juego_t *juego) {
 void jugar_turno(juego_t* juego) {
     atacan_defensores(juego, 0);
     avanzan_enemigos(juego);
-    if ((*juego).nivel.tope_enemigos < (*juego).nivel.max_enemigos_nivel) {
+    if ((*juego).nivel.tope_enemigos < (*juego).nivel.max_enemigos_nivel)
         agregar_enemigo(&((*juego).nivel));
-    }
 }
 
 
@@ -556,7 +546,7 @@ void mostrar_columnas(int tope_col) {
     int j;
 
     printf("  |");
-    for (j=0; j<tope_col; j++){
+    for (j = 0; j < tope_col; j++) {
         if (j < 10) printf(" ");
         printf("%i|", j);
     }
@@ -582,12 +572,10 @@ void mostrar_mapa(char mapa[MAX_FILAS][MAX_COLUMNAS], int tope_fil, int tope_col
 
     mostrar_columnas(tope_col);
     for (i = 0; i < tope_fil; i++) {
-        if (i < 10)
-            printf(" ");
+        if (i < 10) printf(" ");
         printf("%i|", i);
-        for (j = 0 ; j < tope_col; j++) {
+        for (j = 0 ; j < tope_col; j++)
             mostrar_celda(mapa[i][j]);
-        }
         printf("%i\n", i);
     }
     mostrar_columnas(tope_col);

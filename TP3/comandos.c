@@ -2,8 +2,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "defendiendo_torres.h"
 
-#define MAX_ARCHIVO 100
+
 
 const int   PROGRAMA = 0, COMANDO = 1, ARGUMENTO = 2;
 
@@ -14,21 +15,33 @@ const char  RANKING[] = "ranking", CREAR_CAMINOS[] = "crear_camino",
 const char  LISTAR[] = "listar=", CONFIGURACION[] = "config=",
             GRABACION[] = "grabacion=", VELOCIDAD[] = "velocidad=";
 
-const char  SIN_ARCHIVO[] = "", CARACTER_FINAL = '\0';
+const char  SIN_ARCHIVO[] = "", SEPARACION[] = "_", CARACTER_FINAL = '\0';
 
 const char  EXTENSION_RANKING[] = ".csv", EXTENSION_CAMINOS[] = ".txt",
             EXTENSION_CONFIGURACION[] = ".txt", EXTENSION_GRABACION[] = ".dat";
 
-const char  ARCHIVO_CAMINOS[] = "%s.txt",
-            ARCHIVO_CONFIGURACION[] = "%s.txt",
-            ARCHIVO_CONFIGURACION_DEFAULT[] = "default.txt",
-            ARCHIVO_RANKING[] = "ranking";
+const char  CONFIGURACION_DEFAULT[] = "config.txt",
+            ARCHIVO_RANKING[] = "ranking",
+            FORMATO_LECTURA_RANKING[] = "%[^;];%i",
+            FORMATO_IMPRESION_RANKING[] = "%s\t\t\t%i";
+
+const float VELOCIDAD_DEFAULT = 1;
 
 const int   LIMITE_ARGUMENTOS_RANKING = 4, LIMITE_ARGUMENTOS_CREAR_CAMINOS = 3,
             LIMITE_ARGUMENTOS_CREAR_CONFIGURACION = 3, LIMITE_ARGUMENTOS_VER_REPETICION = 4,
             LIMITE_ARGUMENTOS_JUGAR_PARTIDA = 4;
 
 const char  LECTURA[] = "r", ESCRITURA[] = "w";
+
+const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
+            ENANOS_INICIO[] = "ENANOS_INICIO=%i,%i,%i,%i\n",
+            ELFOS_INICIO[] = "ELFOS_INICIO=%i,%i,%i,%i\n",
+            ENANOS_EXTRA[] = "ENANOS_EXTRA=%i,%i,%i\n",
+            ELFOS_EXTRA[] = "ELFOS_EXTRA=%i,%i,%i\n",
+            ENANOS_ANIMO[] = "ENANOS_ANIMO=%i,%i\n",
+            ELFOS_ANIMO[] = "ELFOS_ANIMO=%i,%i\n",
+            VELOCIDAD_CONFIG[] = "VELOCIDAD=%f\n",
+            CAMINOS[] = "CAMINOS=%s\n";
 
 
 
@@ -52,26 +65,12 @@ void mostrar_comandos(char programa[]) {
 
 
 
-//~ Pre: Recibe el nombre de un archivo y la extensión que se espera encontrar.
-//~ Pos: Devuelve true si tiene dicha extensión.
-bool tiene_extension_valida(char archivo[MAX_ARCHIVO], const char extension[]) {
-    bool es_valida = false;
-    char* ext_archivo = strrchr(archivo, (int) *extension);
-    if (ext_archivo != NULL) {
-        if (!strcmp(ext_archivo, extension)) {
-            es_valida = true;
-        }
-    }
-    return es_valida;
-}
-
-
-
 //~ Pre: Recibe la cantidad de argumentos que se ingresaron desde la línea de comandos.
 //~ Pos: Devuelve true cuando hay más de uno, suponiendo que se ha ingresado un comando.
 bool ingresa_comando(int argc) {
     return argc > COMANDO;
 }
+
 
 
 //~ Pre: Recibe la cantidad de argumentos que se ingresaron desde la línea de comandos.
@@ -86,6 +85,38 @@ bool ingresa_argumento(int argc) {
 //~ Pos: Devuelve true si el argumento corresponde a RANKING
 bool ingresa_ranking(char comando[]) {
     return !strcmp(comando, RANKING);
+}
+
+
+
+//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
+//~ Pos: Devuelve true si el argumento corresponde a CREAR_CAMINOS
+bool ingresa_crear_caminos(char comando[]) {
+    return !strcmp(comando, CREAR_CAMINOS);
+}
+
+
+
+//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
+//~ Pos: Devuelve true si el argumento corresponde a CREAR_CONFIGURACION
+bool ingresa_crear_configuracion(char comando[]) {
+    return !strcmp(comando, CREAR_CONFIGURACION);
+}
+
+
+
+//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
+//~ Pos: Devuelve true si el argumento corresponde a VER_REPETICION
+bool ingresa_ver_repeticion(char comando[]) {
+    return !strcmp(comando, VER_REPETICION);
+}
+
+
+
+//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
+//~ Pos: Devuelve true si el argumento corresponde a JUGAR_PARTIDA
+bool ingresa_jugar_partida(char comando[]) {
+    return !strcmp(comando, JUGAR_PARTIDA);
 }
 
 
@@ -129,102 +160,6 @@ bool ingresa_configuracion(int argc, char *argv[], char archivo[MAX_ARCHIVO]) {
 
 
 
-//~ Pre: Recibe todos los argumentos de la línea de comandos junto a su tope. Se presupone que son argumentos de RANKING válidos.
-//~ Pos: Se comprueba la validez de los argumentos ingresados. Cuando se encuentra un error, se imprime un mensaje en pantalla
-//~      y *es_valido cambia su valor a falso. Se obtiene el nombre del archivo de configuracion y la cantidad de puntajes a listar.
-void comprobar_ranking(int argc, char *argv[], char config[MAX_ARCHIVO], int *cantidad, bool *es_valido) {
-    if (argc > LIMITE_ARGUMENTOS_RANKING) {
-        printf("Mucho argumento\n");
-        *es_valido = false;
-        return;
-    }
-
-    if (ingresa_listar(argc, argv, cantidad)) {
-        if (!*cantidad) {
-            printf("No se ingresó bien una cantidad a listar.\n");
-            *es_valido = false;
-        }
-        printf("Listar: %i\n", *cantidad);
-    }
-    if (ingresa_configuracion(argc, argv, config)) {
-        if (!tiene_extension_valida(config, EXTENSION_CONFIGURACION)) {
-            printf("No se ingresó bien la configuración.\n");
-            *es_valido = false;
-        }
-        printf("Configuracion: %s\n", config);
-    }
-}
-
-
-
-//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
-//~ Pos: Devuelve true si el argumento corresponde a CREAR_CAMINOS
-bool ingresa_crear_caminos(char comando[]) {
-    return !strcmp(comando, CREAR_CAMINOS);
-}
-
-
-
-//~ Pre: Recibe todos los argumentos de la línea de comandos junto a su tope. Se presupone que son argumentos de CREAR_CAMINOS válidos.
-//~ Pos: Se comprueba la validez de los argumentos ingresados. Cuando se encuentra un error, se imprime un mensaje en pantalla
-//~      y *es_valido cambia su valor a falso. Se obtiene nombre del archivo de caminos a crear o sobreescribir.
-void comprobar_crear_caminos(int argc, char *argv[], char archivo[MAX_ARCHIVO], bool *es_valido) {
-    if (argc > LIMITE_ARGUMENTOS_CREAR_CAMINOS) {
-        printf("Mucho argumento\n");
-        *es_valido = false;
-    } else if (!ingresa_argumento(argc)) {
-        printf("Falta nombre de archivo\n");
-        *es_valido = false;
-    } else {
-        strcpy(archivo, argv[ARGUMENTO]);
-        printf("Archivo: %s\n", archivo);
-        if (!tiene_extension_valida(archivo, EXTENSION_CAMINOS)) {
-            printf("No se ingresó una extensión válida\n");
-            *es_valido = false;
-        }
-    }
-}
-
-
-
-//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
-//~ Pos: Devuelve true si el argumento corresponde a CREAR_CONFIGURACION
-bool ingresa_crear_configuracion(char comando[]) {
-    return !strcmp(comando, CREAR_CONFIGURACION);
-}
-
-
-
-//~ Pre: Recibe todos los argumentos de la línea de comandos junto a su tope. Se presupone que son argumentos de CREAR_CONFIGURACIÓN válidos.
-//~ Pos: Se comprueba la validez de los argumentos ingresados. Cuando se encuentra un error, se imprime un mensaje en pantalla
-//~      y *es_valido cambia su valor a falso. Se obtiene nombre del archivo de configuración a crear o sobreescribir.
-void comprobar_crear_configuracion(int argc, char *argv[], char archivo[MAX_ARCHIVO], bool *es_valido) {
-    if (argc > LIMITE_ARGUMENTOS_CREAR_CONFIGURACION) {
-        printf("Mucho argumento\n");
-        *es_valido = false;
-    } else if (!ingresa_argumento(argc)) {
-        printf("Falta nombre de archivo.\n");
-        *es_valido = false;
-    } else {
-        strcpy(archivo, argv[ARGUMENTO]);
-        printf("Archivo: %s\n", archivo);
-        if (!tiene_extension_valida(archivo, EXTENSION_CONFIGURACION)) {
-            printf("No se ingresó una extensión válida\n");
-            *es_valido = false;
-        }
-    }
-}
-
-
-
-//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
-//~ Pos: Devuelve true si el argumento corresponde a VER_REPETICION
-bool ingresa_ver_repeticion(char comando[]) {
-    return !strcmp(comando, VER_REPETICION);
-}
-
-
-
 //~ Pre: Recibe los argumentos de la línea de comandos. archivo se encuentra sin inicializar.
 //~ Pos: Devuelve true si se ha ingresado GRABACION e iniciliza archivo con la cadena siguiente a GRABACION.
 //~      No se comprueba si archivo es un archivo de grabacion válido (si existe, si se tienen permisos de lectura,
@@ -255,12 +190,97 @@ bool ingresa_velocidad(int argc, char *argv[], float *velocidad) {
         if (!strncmp(argv[i], VELOCIDAD, strlen(VELOCIDAD))) {
             hay_velocidad = true;
             size_t pos_velocidad = strlen(VELOCIDAD);
-            *velocidad = atof(&(argv[i][pos_velocidad]));
+            *velocidad = (float) atof(&(argv[i][pos_velocidad]));
         }
         i++;
     }
     return hay_velocidad;
 }
+
+
+
+//~ Pre: Recibe el nombre de un archivo y la extensión que se espera encontrar.
+//~ Pos: Devuelve true si tiene dicha extensión.
+bool tiene_extension_valida(char archivo[MAX_ARCHIVO], const char extension[]) {
+    bool es_valida = false;
+    char* ext_archivo = strrchr(archivo, (int) *extension);
+    if (ext_archivo != NULL) {
+        if (!strcmp(ext_archivo, extension)) {
+            es_valida = true;
+        }
+    }
+    return es_valida;
+}
+
+
+
+//~ Pre: Recibe todos los argumentos de la línea de comandos junto a su tope. Se presupone que son argumentos de RANKING válidos.
+//~ Pos: Se comprueba la validez de los argumentos ingresados. Cuando se encuentra un error, se imprime un mensaje en pantalla
+//~      y *es_valido cambia su valor a falso. Se obtiene el nombre del archivo de configuracion y la cantidad de puntajes a listar.
+void comprobar_ranking(int argc, char *argv[], char config[MAX_ARCHIVO], int *cantidad, bool *es_valido) {
+    if (argc > LIMITE_ARGUMENTOS_RANKING) {
+        printf("Mucho argumento\n");
+        *es_valido = false;
+        return;
+    }
+
+    if (ingresa_listar(argc, argv, cantidad)) {
+        if (!*cantidad) {
+            printf("No se ingresó bien la cantidad a listar.\n");
+            *es_valido = false;
+        }
+    }
+    if (ingresa_configuracion(argc, argv, config)) {
+        if (!tiene_extension_valida(config, EXTENSION_CONFIGURACION)) {
+            printf("El archivo no tiene una extensión válida. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
+            *es_valido = false;
+        }
+    } else strcpy(config, CONFIGURACION_DEFAULT);
+}
+
+
+
+
+//~ Pre: Recibe todos los argumentos de la línea de comandos junto a su tope. Se presupone que son argumentos de CREAR_CAMINOS válidos.
+//~ Pos: Se comprueba la validez de los argumentos ingresados. Cuando se encuentra un error, se imprime un mensaje en pantalla
+//~      y *es_valido cambia su valor a falso. Se obtiene nombre del archivo de caminos a crear o sobreescribir.
+void comprobar_crear_caminos(int argc, char *argv[], char archivo[MAX_ARCHIVO], bool *es_valido) {
+    if (argc > LIMITE_ARGUMENTOS_CREAR_CAMINOS) {
+        printf("Mucho argumento.\n");
+        *es_valido = false;
+    } else if (!ingresa_argumento(argc)) {
+        printf("Falta ingresar el nombre de archivo%s.\n", EXTENSION_CAMINOS);
+        *es_valido = false;
+    } else {
+        strcpy(archivo, argv[ARGUMENTO]);
+        if (!tiene_extension_valida(archivo, EXTENSION_CAMINOS)) {
+            printf("La extensión del archivo no es válida. Tiene que ser %s.\n", EXTENSION_CAMINOS);
+            *es_valido = false;
+        }
+    }
+}
+
+
+
+//~ Pre: Recibe todos los argumentos de la línea de comandos junto a su tope. Se presupone que son argumentos de CREAR_CONFIGURACIÓN válidos.
+//~ Pos: Se comprueba la validez de los argumentos ingresados. Cuando se encuentra un error, se imprime un mensaje en pantalla
+//~      y *es_valido cambia su valor a falso. Se obtiene nombre del archivo de configuración a crear o sobreescribir.
+void comprobar_crear_configuracion(int argc, char *argv[], char archivo[MAX_ARCHIVO], bool *es_valido) {
+    if (argc > LIMITE_ARGUMENTOS_CREAR_CONFIGURACION) {
+        printf("Mucho argumento\n");
+        *es_valido = false;
+    } else if (!ingresa_argumento(argc)) {
+        printf("Falta ingresar el nombre de archivo%s.\n", EXTENSION_CONFIGURACION);
+        *es_valido = false;
+    } else {
+        strcpy(archivo, argv[ARGUMENTO]);
+        if (!tiene_extension_valida(archivo, EXTENSION_CONFIGURACION)) {
+            printf("La extensión del archivo no es válida. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
+            *es_valido = false;
+        }
+    }
+}
+
 
 
 
@@ -271,29 +291,19 @@ void comprobar_ver_repeticion(int argc, char *argv[], char grabacion[MAX_ARCHIVO
     if (argc > LIMITE_ARGUMENTOS_VER_REPETICION) {
         printf("Mucho argumento\n");
         *es_valido = false;
-    } else if (
-        !ingresa_argumento(argc)
-        || !ingresa_grabacion(argc, argv, grabacion)
-        || !tiene_extension_valida(grabacion, EXTENSION_GRABACION)
-    ) {
-        printf("Falta grabación\n");
+    } else if (!ingresa_argumento(argc) && !ingresa_grabacion(argc, argv, grabacion)) {
+        printf("Tiene que ingresarse un archivo de grabacion%s\n", EXTENSION_GRABACION);
+        *es_valido = false;
+    }  else if (!tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
+        printf("La grabación no tiene una extensión válida. Tiene que ser %s\n", EXTENSION_GRABACION);
         *es_valido = false;
     } else {
-        printf("Grabacion: %s\n", grabacion);
-        if (ingresa_velocidad(argc, argv, velocidad) && *velocidad) {
-            printf("Velocidad: %f\n", *velocidad);
-        } else {
-            printf("Velocidad default\n");
+        if (!ingresa_velocidad(argc, argv, velocidad)) {
+            *velocidad = VELOCIDAD_DEFAULT;
+        } else if (!*velocidad) {
+            printf("Hubo problemas con la velocidad ingresada\n");
         }
     }
-}
-
-
-
-//~ Pre: Recibe el argumento que esté en la posición de COMANDO.
-//~ Pos: Devuelve true si el argumento corresponde a JUGAR_PARTIDA
-bool ingresa_jugar_partida(char comando[]) {
-    return !strcmp(comando, JUGAR_PARTIDA);
 }
 
 
@@ -304,14 +314,20 @@ bool ingresa_jugar_partida(char comando[]) {
 void comprobar_jugar_partida(int argc, char *argv[], char config[MAX_ARCHIVO], char grabacion[MAX_ARCHIVO], bool *es_valido) {
     if (argc > LIMITE_ARGUMENTOS_JUGAR_PARTIDA) {
         printf("Mucho argumento\n");
+        *es_valido = false;
     } else {
-        if (ingresa_configuracion(argc, argv, config) && tiene_extension_valida(config, EXTENSION_CONFIGURACION)) {
-            printf("Configuracion: %s\n", config);
-        } else {
-            printf("Configuracion default\n");
-        }
-        if (ingresa_grabacion(argc, argv, grabacion) && tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
-            printf("Grabacion: %s\n", grabacion);
+        if (ingresa_configuracion(argc, argv, config)) {
+            if (!tiene_extension_valida(config, EXTENSION_CONFIGURACION)) {
+                printf("La configuración no está con la extensión adecuada. Tiene que ser %s.\n", EXTENSION_CONFIGURACION);
+                *es_valido = false;
+            }
+        } else strcpy(config, CONFIGURACION_DEFAULT);
+
+        if (ingresa_grabacion(argc, argv, grabacion)) {
+            if (!tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
+                printf("La grabación no está con la extensión adecuada. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
+                *es_valido = false;
+            };
         }
     }
 }
@@ -337,29 +353,96 @@ bool se_puede_abrir(FILE* archivo, char nombre[MAX_ARCHIVO]) {
 
 
 
-//~ Le da el formato a ranking desde la configuracion para poder obtener el archivo donde se almacenó el rank
-void obtener_ranking(char rank[MAX_ARCHIVO], char config[MAX_ARCHIVO]) {
-    strcpy(rank, ARCHIVO_RANKING);
-    if (strcmp(config, ARCHIVO_CONFIGURACION_DEFAULT)) {
+//~ Pre: Recibe el nombre de un archivo de configuración.
+//~ Pos: Inicializa ranking con el nombre del archivo de una configuración personalizada o predeterminada.
+void obtener_ranking(char ranking[MAX_ARCHIVO], char config[MAX_ARCHIVO]) {
+    strcpy(ranking, ARCHIVO_RANKING);
+    if (strcmp(config, CONFIGURACION_DEFAULT)) {
         quitar_extension(config, EXTENSION_CONFIGURACION);
-        strcat(rank, "_");
-        strcat(rank, config);
+        strcat(ranking, SEPARACION);
+        strcat(ranking, config);
     }
-    strcat(rank, EXTENSION_RANKING);
+    strcat(ranking, EXTENSION_RANKING);
+}
+
+
+
+void crear_camino(int nivel_actual) {
+    /*
+     * crear_camino(1)
+     * crear_camino(2)
+     * crear_camino(3)
+     * crear_camino(4)
+     */
+}
+
+
+
+void crear_configuracion() {
+    /*
+     * preguntar_resistencia_torres();
+     * preguntar enanos por nivel
+     * preguntar elfos por nivel
+     * preguntar enanos extra, coste a las torres
+     * preguntar elfos extra coste a las torres
+     * preguntar fallo y critico enanos
+     * preguntar fallo y critico elfos
+     * preguntar velocidad
+     * preguntar caminos
+     */
+}
+
+
+
+
+void escribir_configuracion(configuracion_t *configuracion, FILE* archivo) {
+    juego_t juego = (*configuracion).juego;
+    torres_t torres = juego.torres;
+    fprintf(archivo, RESISTENCIA_TORRES, torres.resistencia_torre_1, torres.resistencia_torre_2);
+    fprintf(archivo, ENANOS_INICIO, (*configuracion).enanos_inicio[0], (*configuracion).enanos_inicio[1], (*configuracion).enanos_inicio[2], (*configuracion).enanos_inicio[3]);
+    fprintf(archivo, ELFOS_INICIO, (*configuracion).elfos_inicio[0], (*configuracion).elfos_inicio[1], (*configuracion).elfos_inicio[2], (*configuracion).elfos_inicio[3]);
+    fprintf(archivo, ENANOS_EXTRA, torres.enanos_extra, (*configuracion).coste_enanos_torre_1, (*configuracion).coste_enanos_torre_2);
+    fprintf(archivo, ELFOS_EXTRA, torres.elfos_extra, (*configuracion).coste_elfos_torre_1, (*configuracion).coste_elfos_torre_2);
+    fprintf(archivo, ENANOS_ANIMO, juego.fallo_gimli, juego.critico_gimli);
+    fprintf(archivo, ELFOS_ANIMO, juego.fallo_legolas, juego.critico_legolas);
+    fprintf(archivo, VELOCIDAD_CONFIG, (*configuracion).velocidad);
+    fprintf(archivo, CAMINOS, (*configuracion).caminos);
+}
+
+
+
+void cargar_configuracion(configuracion_t *configuracion, FILE* archivo) {
+    juego_t juego = (*configuracion).juego;
+    torres_t torres = juego.torres;
+    fscanf(archivo, RESISTENCIA_TORRES, &(torres.resistencia_torre_1), &(torres.resistencia_torre_2));
+    fscanf(archivo, ENANOS_INICIO, &((*configuracion).enanos_inicio[0]), &((*configuracion).enanos_inicio[1]), &((*configuracion).enanos_inicio[2]), &((*configuracion).enanos_inicio[3]));
+    fscanf(archivo, ELFOS_INICIO, &((*configuracion).elfos_inicio[0]), (&(*configuracion).elfos_inicio[1]), &((*configuracion).elfos_inicio[2]), &((*configuracion).elfos_inicio[3]));
+    fscanf(archivo, ENANOS_EXTRA, &(torres.enanos_extra), &((*configuracion).coste_enanos_torre_1), &((*configuracion).coste_enanos_torre_2));
+    fscanf(archivo, ELFOS_EXTRA, &(torres.elfos_extra), &((*configuracion).coste_elfos_torre_1), &((*configuracion).coste_elfos_torre_2));
+    fscanf(archivo, ENANOS_ANIMO, &(juego.fallo_gimli), &(juego.critico_gimli));
+    fscanf(archivo, ELFOS_ANIMO, &(juego.fallo_legolas), &(juego.critico_legolas));
+    fscanf(archivo, VELOCIDAD_CONFIG, &((*configuracion).velocidad));
+    fscanf(archivo, CAMINOS, (*configuracion).caminos);
 }
 
 
 
 void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
-    char archivo_ranking[MAX_ARCHIVO];
-    obtener_ranking(archivo_ranking, config);
-    FILE* archivo = fopen(archivo_ranking, LECTURA);
-    if (!se_puede_abrir(archivo, archivo_ranking)) return;
-    /*
-     * mostrar ranking
-     */
+    char ranking[MAX_ARCHIVO];
+    obtener_ranking(ranking, config);
+    FILE* archivo = fopen(ranking, LECTURA);
+    if (!se_puede_abrir(archivo, ranking)) return;
+    rank_t rank;
+    int leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
+    while (leido) {
+        printf(FORMATO_IMPRESION_RANKING, rank.nombre, rank.puntaje);
+        leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
+    }
     fclose(archivo);
 }
+
+
+
 
 void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
     FILE* archivo = fopen(caminos, ESCRITURA);
@@ -370,14 +453,21 @@ void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
     fclose(archivo);
 }
 
+
+
+
 void ejecutar_crear_configuracion(char config[MAX_ARCHIVO]) {
     FILE* archivo = fopen(config, ESCRITURA);
     if (!se_puede_abrir(archivo, config)) return;
     /*
      * crear configuracion
+     * escribir configuracion
      */
     fclose(archivo);
 }
+
+
+
 
 void ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
     FILE* archivo = fopen(grabacion, LECTURA);
@@ -388,19 +478,22 @@ void ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
     fclose(archivo);
 }
 
+
+
+
 void ejecutar_jugar_partida(char config[MAX_ARCHIVO], char grabacion[MAX_ARCHIVO]) {
     FILE* archivo_config = fopen(config, LECTURA);
     if (!se_puede_abrir(archivo_config, config)) return;
-    /*
-     * cargar configuracion
-     */
+    //~ configuracion_t configuracion;
+    //~ cargar_configuracion(&configuracion, archivo_config);
     fclose(archivo_config);
+
+    char ranking[MAX_ARCHIVO];
+    obtener_ranking(ranking, config);
 
     FILE* archivo_grabacion = fopen(grabacion, ESCRITURA);
     if (!se_puede_abrir(archivo_grabacion, grabacion)) return;
-    /*
-     * jugar y grabar
-     */
+    //~ iniciar_juego(configuracion, archivo_grabacion, archivo_ranking);
     fclose(archivo_grabacion);
 }
 
@@ -414,60 +507,30 @@ int main(int argc, char *argv[]) {
 
     bool es_valido = true;
     char config[MAX_ARCHIVO], caminos[MAX_ARCHIVO], grabacion[MAX_ARCHIVO];
-    int cant_a_listar;
-    float velocidad;
+    int cant_a_listar; float velocidad;
 
     if (ingresa_ranking(argv[COMANDO])) {
-        /*
-         * ./defendiendo ranking listar=num config=config
-         * listar y config opcionales.
-         * listar default: mostrar todos de una configuracion
-         */
         comprobar_ranking(argc, argv, config, &cant_a_listar, &es_valido);
         if (es_valido) ejecutar_ranking(cant_a_listar, config);
+
     } else if (ingresa_crear_caminos(argv[COMANDO])) {
-        /*
-         * ./defendiendo crear_camino mis_caminos.txt
-         * archivo obligatorio
-         * mostrar en pantalla como va quedado
-         */
         comprobar_crear_caminos(argc, argv, caminos, &es_valido);
         if (es_valido) ejecutar_crear_caminos(caminos);
+
     } else if (ingresa_crear_configuracion(argv[COMANDO])) {
-        /*
-         * ./defendiendo crear_configuracion mi_configuracion.txt
-         * archivo obligatorio
-         * caracteristicas predeterminadas: -1
-         * configurar RESISTENCIA_TORRES
-         * configurar ENANOS_INICIO
-         * configurar ELFOS_INICIO
-         * configurar ENANOS_EXTRA
-         * configurar ELFOS_EXTRA
-         * configurar ENANOS_ANIMO
-         * configurar ELFOS_ANIMO
-         * configurar VELOCIDAD del juego
-         * configurar CAMINOS = caminos.txt
-         */
         comprobar_crear_configuracion(argc, argv, config, &es_valido);
         if (es_valido) ejecutar_crear_configuracion(config);
+
     } else if (ingresa_ver_repeticion(argv[COMANDO])) {
-        /*
-         * ./defendiendo poneme_la_repe grabacion=mi_partida.dat velocidad=0.5
-         * grabacion obligatoria, velocidad opcional
-         * velocidad solicitada o 1 (default)
-         */
         comprobar_ver_repeticion(argc, argv, grabacion, &velocidad, &es_valido);
         if (es_valido) ejecutar_ver_repeticion(grabacion, velocidad);
+
     } else if (ingresa_jugar_partida(argv[COMANDO])) {
-        /*
-         * ./defendiendo jugar config=mi_configuracion.txt grabacion=mi_partida.dat
-         * si el archivo no existe o no fue ingresado: config_default
-         * grabacion: (sobre)escribe si fue ingresado, si no no se graba
-         */
         comprobar_jugar_partida(argc, argv, config, grabacion, &es_valido);
         if (es_valido) ejecutar_jugar_partida(config, grabacion);
+
     } else {
-        printf("No se ingreso ningun comando correcto.\n");
+        printf("No se ingresó ningún comando correcto.\n");
     }
 
     return 0;

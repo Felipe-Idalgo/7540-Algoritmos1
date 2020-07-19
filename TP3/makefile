@@ -7,16 +7,11 @@ COMPILABLES=*.c
 64bit=64bit/utiles.o
 EXEC=defendiendo
 
-prueba: comandos.c
-	$(CC) $(CFLAGS) comandos.c -o $(EXEC)
-
-construccion_32: $(ENTREGA)
-	$(CC) $(CFLAGS) $(COMPILABLES) $(32bit) -o $(EXEC)
-	echo "Ingrese ./$(EXEC) para ejecutar"
-
-construccion_64: $(ENTREGA)
+build_64: $(ENTREGA)
 	$(CC) $(CFLAGS) $(COMPILABLES) $(64bit) -o $(EXEC)
-	echo "Ingrese ./$(EXEC) para ejecutar"
+
+build_32: $(ENTREGA)
+	$(CC) $(CFLAGS) $(COMPILABLES) $(32bit) -o $(EXEC)
 
 entrega: $(ENTREGA)
 	zip entrega.zip $(ENTREGA)

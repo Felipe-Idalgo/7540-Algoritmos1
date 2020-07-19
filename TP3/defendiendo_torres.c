@@ -22,39 +22,83 @@
 #define GANADO 1
 #define PERDIDO -1
 
-const int TAMANIO_MENOR = 15;
-const int TAMANIO_MAYOR = 20;
+const int   INDEFINIDO = -1;
 
-const int ATAQUE_ELFOS = 30;
-const int ATAQUE_ENANOS = 60;
-const int ADICIONAL_CRITICO = 40;
-const int NO_ATACO = 0;
-const int ATACO = 1;
-const int DISTANCIA_DE_ATAQUE_ELFOS = 3;
-const int DISTANCIA_DE_ATAQUE_ENANOS = 2;
+const int   TAMANIO_MENOR = 15, TAMANIO_MAYOR = 20;
 
-const int LIBRE = 1;
-const int NO_LIBRE = 0;
+const int   ELFOS_EXTRAS = 10, ENANOS_EXTRAS = 10;
 
-const int CAMINO_UNO = 1;
-const int CAMINO_DOS = 2;
-const int POSICION_INICIAL = 0;
-const int VIDA_INICIAL = 200;
-const int VIDA_EXTRA = 100;
-const int SIN_VIDA = 0;
+const int   MAXIMO_RESISTENCIA = 600;
 
-const char ENCABEZADO_A[] = " ================================================\n";
-const char ENCABEZADO_1[] = "                        ESTE\n";
-const char ENCABEZADO_2[] = "                       OESTE\n";
-const char ENCABEZADO_B[] = " ===============================================================\n";
-const char ENCABEZADO_3[] = "                              NORTE\n";
-const char ENCABEZADO_4[] = "                               SUR\n";
+const char  BUENO = 'B', REGULAR = 'R', MALO = 'M';
+
+const int   CRITICO_BUENO = 25, CRITICO_REGULAR = 10, CRITICO_MALO = 0;
+
+const int   ATAQUE_ELFOS = 30, ATAQUE_ENANOS = 60, ADICIONAL_CRITICO = 40;
+
+const int   NO_ATACO = 0, ATACO = 1;
+
+const int   DISTANCIA_DE_ATAQUE_ELFOS = 3, DISTANCIA_DE_ATAQUE_ENANOS = 2;
+
+const int   LIBRE = 1, NO_LIBRE = 0;
+
+const int   CAMINO_UNO = 1, CAMINO_DOS = 2;
+
+const int   POSICION_INICIAL = 0;
+
+const int   VIDA_INICIAL = 200, VIDA_EXTRA = 100, SIN_VIDA = 0;
+
+const char  ENCABEZADO_A[] = " ================================================\n",
+            ENCABEZADO_1[] = "                        ESTE\n",
+            ENCABEZADO_2[] = "                       OESTE\n",
+            ENCABEZADO_B[] = " ===============================================================\n",
+            ENCABEZADO_3[] = "                              NORTE\n",
+            ENCABEZADO_4[] = "                               SUR\n";
+
+
+
+//~ Pre: Recibe las torres de un juego sin inicializar
+//~ Pos: Inicializa los valores de las torres en sus valores máximos.
+void inicializar_torres(torres_t* torres) {
+    if (torres->resistencia_torre_1 == INDEFINIDO) (*torres).resistencia_torre_1 = MAXIMO_RESISTENCIA;
+    if (torres->resistencia_torre_2 == INDEFINIDO) (*torres).resistencia_torre_2 = MAXIMO_RESISTENCIA;
+    if (torres->enanos_extra == INDEFINIDO) (*torres).enanos_extra = ENANOS_EXTRAS;
+    if (torres->elfos_extra == INDEFINIDO) (*torres).elfos_extra = ELFOS_EXTRAS;
+}
+
+
+
+//~ Pre: Recibe el ánimo de uno de los lideres, pudiendo ser BUENO, REGULAR o MALO.
+//~ Pos: Genera el porcetaje de probabilidad de dar un ataque crítico.
+int critico_segun_animo(char animo) {
+    if (animo == BUENO)
+        return CRITICO_BUENO;
+    else if (animo == REGULAR)
+        return CRITICO_REGULAR;
+    return CRITICO_MALO;
+}
+
+
+
+//~ Pre: Recibe el estado del tiempo, ya sea de la velocidad del viento o de la humedad.
+//~ Pos: Genera el porcentaje de fallo de los defensores, afectados por las condiciones meteorologicas.
+int fallo_segun_tiempo(int tiempo) {
+    int fallo;
+    fallo = tiempo / 2;
+    return fallo;
+}
 
 
 
 //~ Definido en la defendiendo_torres.h
-void inicializar_juego(juego_t* juego, configuracion_t configuracion) {
+void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion) {
     *juego = configuracion.juego;
+    inicializar_torres(&((*juego).torres));
+    if (juego->critico_legolas == INDEFINIDO) (*juego).critico_legolas = critico_segun_animo(animo_legolas);
+    if (juego->critico_gimli == INDEFINIDO) (*juego).critico_gimli = critico_segun_animo(animo_gimli);
+    if (juego->fallo_legolas == INDEFINIDO) (*juego).fallo_legolas = fallo_segun_tiempo(viento);
+    if (juego->fallo_gimli == INDEFINIDO) (*juego).fallo_gimli = fallo_segun_tiempo(humedad);
+    (*juego).nivel_actual = PRIMER_NIVEL;
 }
 
 

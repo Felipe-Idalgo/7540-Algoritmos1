@@ -70,6 +70,7 @@ typedef struct rank {
 
 typedef struct configuracion {
     juego_t juego;
+    int max_niveles;
     int enanos_inicio[MAX_NIVELES];
     int elfos_inicio[MAX_NIVELES];
     int coste_enanos_torre_1;
@@ -85,7 +86,7 @@ typedef struct configuracion {
  * los ataques críticos y fallo de Legolas y Gimli.
  * NO inicializará el primer nivel.
  */
-void inicializar_juego(juego_t* juego, configuracion_t configuracion);
+void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion);
 
 /*
  * Recibe un juego con todas sus estructuras válidas. 

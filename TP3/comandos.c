@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "defendiendo_torres.h"
+#include "juego.h"
 
 
 
@@ -20,10 +21,12 @@ const char  SIN_ARCHIVO[] = "", SEPARACION[] = "_", CARACTER_FINAL = '\0';
 const char  EXTENSION_RANKING[] = ".csv", EXTENSION_CAMINOS[] = ".txt",
             EXTENSION_CONFIGURACION[] = ".txt", EXTENSION_GRABACION[] = ".dat";
 
-const char  CONFIGURACION_DEFAULT[] = "config.txt",
+const char  CONFIGURACION_TMP[] = "c_tmp.txt",
+            GRABACION_TMP[] = "g_tmp.dat",
             ARCHIVO_RANKING[] = "ranking",
-            FORMATO_LECTURA_RANKING[] = "%[^;];%i",
-            FORMATO_IMPRESION_RANKING[] = "%s\t\t\t%i";
+            FORMATO_LECTURA_RANKING[] = "%[^;];%i\n",
+            FORMATO_IMPRESION_RANKING[] = " %i. %s\t\t\t%i\n",
+            FORMATO_ENCABEZADO_RANKING[] = "JUGADOR\t\t\t\tPTOS.\n";
 
 const float VELOCIDAD_DEFAULT = 1;
 
@@ -235,7 +238,7 @@ void comprobar_ranking(int argc, char *argv[], char config[MAX_ARCHIVO], int *ca
             printf("El archivo no tiene una extensión válida. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
             *es_valido = false;
         }
-    } else strcpy(config, CONFIGURACION_DEFAULT);
+    } else strcpy(config, CONFIGURACION_TMP);
 }
 
 
@@ -321,14 +324,14 @@ void comprobar_jugar_partida(int argc, char *argv[], char config[MAX_ARCHIVO], c
                 printf("La configuración no está con la extensión adecuada. Tiene que ser %s.\n", EXTENSION_CONFIGURACION);
                 *es_valido = false;
             }
-        } else strcpy(config, CONFIGURACION_DEFAULT);
+        } else strcpy(config, CONFIGURACION_TMP);
 
         if (ingresa_grabacion(argc, argv, grabacion)) {
             if (!tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
-                printf("La grabación no está con la extensión adecuada. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
+                printf("La grabación no está con la extensión adecuada. Tiene que ser %s\n", EXTENSION_GRABACION);
                 *es_valido = false;
             };
-        }
+        } else strcpy(grabacion, GRABACION_TMP);
     }
 }
 
@@ -357,7 +360,7 @@ bool se_puede_abrir(FILE* archivo, char nombre[MAX_ARCHIVO]) {
 //~ Pos: Inicializa ranking con el nombre del archivo de una configuración personalizada o predeterminada.
 void obtener_ranking(char ranking[MAX_ARCHIVO], char config[MAX_ARCHIVO]) {
     strcpy(ranking, ARCHIVO_RANKING);
-    if (strcmp(config, CONFIGURACION_DEFAULT)) {
+    if (strcmp(config, CONFIGURACION_TMP)) {
         quitar_extension(config, EXTENSION_CONFIGURACION);
         strcat(ranking, SEPARACION);
         strcat(ranking, config);
@@ -428,15 +431,18 @@ void cargar_configuracion(configuracion_t *configuracion, FILE* archivo) {
 
 
 void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
+    int i = 1, leido;
     char ranking[MAX_ARCHIVO];
     obtener_ranking(ranking, config);
     FILE* archivo = fopen(ranking, LECTURA);
     if (!se_puede_abrir(archivo, ranking)) return;
     rank_t rank;
-    int leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
-    while (leido) {
-        printf(FORMATO_IMPRESION_RANKING, rank.nombre, rank.puntaje);
+    leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
+    printf(FORMATO_ENCABEZADO_RANKING);
+    while ((leido != EOF) && (i < cant_a_listar)) {
+        printf(FORMATO_IMPRESION_RANKING, i, rank.nombre, rank.puntaje);
         leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
+        i++;
     }
     fclose(archivo);
 }
@@ -482,19 +488,37 @@ void ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
 
 
 void ejecutar_jugar_partida(char config[MAX_ARCHIVO], char grabacion[MAX_ARCHIVO]) {
-    FILE* archivo_config = fopen(config, LECTURA);
-    if (!se_puede_abrir(archivo_config, config)) return;
-    //~ configuracion_t configuracion;
-    //~ cargar_configuracion(&configuracion, archivo_config);
-    fclose(archivo_config);
-
+    configuracion_t configuracion;
     char ranking[MAX_ARCHIVO];
-    obtener_ranking(ranking, config);
+    FILE *archivo_config, *archivo_ranking, *archivo_grabacion;
 
-    FILE* archivo_grabacion = fopen(grabacion, ESCRITURA);
-    if (!se_puede_abrir(archivo_grabacion, grabacion)) return;
-    //~ iniciar_juego(configuracion, archivo_grabacion, archivo_ranking);
-    fclose(archivo_grabacion);
+    archivo_config = fopen(config, LECTURA);
+    if (se_puede_abrir(archivo_config, config)) {
+        cargar_configuracion(&configuracion, archivo_config);
+        fclose(archivo_config);
+    }
+
+    obtener_ranking(ranking, config);
+    archivo_ranking = fopen(ranking, LECTURA);
+    if (!se_puede_abrir(archivo_ranking, ranking)) {
+        FILE* tmp_ranking = fopen(ranking, ESCRITURA);
+        if (!se_puede_abrir(tmp_ranking, ranking)){
+            return;
+        }
+        fclose(tmp_ranking);
+        archivo_ranking = fopen(ranking, LECTURA);
+    }
+
+    archivo_grabacion = fopen(grabacion, ESCRITURA);
+    iniciar_juego(configuracion, archivo_grabacion, archivo_ranking);
+    if (se_puede_abrir(archivo_grabacion, grabacion)) {
+        fclose(archivo_grabacion);
+        if (strcmp(grabacion, GRABACION_TMP)) {
+            remove(grabacion);
+        }
+    }
+    fclose(archivo_ranking);
+    ejecutar_ranking(100, config);
 }
 
 

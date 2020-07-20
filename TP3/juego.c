@@ -6,6 +6,7 @@
 #include <math.h>
 #include <time.h>
 #include "defendiendo_torres.h"
+#include "animos.h"
 #include "utiles.h"
 
 #define ENANOS 'G'
@@ -461,6 +462,41 @@ void mostrar_mensaje_final(int estado_juego) {
 
 
 
+int cantidad_de_enemigos_vencidos(juego_t juego) {
+    int i, orcos_muertos = SIN_ENEMIGOS;
+
+    for (i = 0; i < juego.nivel.tope_enemigos; i++)
+        if (juego.nivel.enemigos[i].vida <= 0) orcos_muertos++;
+
+    switch(juego.nivel_actual) {
+        case CUARTO_NIVEL:
+            orcos_muertos += MAX_ENEMIGOS_TERCER_NIVEL;
+        case TERCER_NIVEL:
+            orcos_muertos += MAX_ENEMIGOS_SEGUND_NIVEL;
+        case SEGUND_NIVEL:
+            orcos_muertos += MAX_ENEMIGOS_PRIMER_NIVEL;
+        default:
+            break;
+    }
+    return orcos_muertos;
+}
+
+
+
+int recursos_usados (torres_t torres, configuracion_t configuracion) {
+    int i, recursos = torres.resistencia_torre_1;
+    recursos += torres.resistencia_torre_2;
+    recursos += torres.enanos_extra;
+    recursos += torres.elfos_extra;
+    for (i = 0; i < configuracion.max_niveles; i++) {
+        recursos += configuracion.enanos_inicio[i];
+        recursos += configuracion.elfos_inicio[i];
+    }
+    return recursos;
+}
+
+
+
 void grabar(juego_t juego, FILE* grabacion) {
     if (grabacion) fwrite(&juego, sizeof(juego_t), 1, grabacion);
 }
@@ -490,9 +526,14 @@ void reproducir(FILE* grabacion, float velocidad) {
 
 void iniciar_juego(configuracion_t configuracion, FILE* grabacion, FILE* ranking) {
     srand((unsigned)time(NULL));
+    int recursos, viento, humedad;
+    char animo_legolas, animo_gimli;
     juego_t juego;
+    rank_t rank;
 
-    inicializar_juego(&juego, configuracion);
+    animos(&viento, &humedad, &animo_legolas, &animo_gimli);
+    inicializar_juego(&juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
+    recursos = recursos_usados(juego.torres, configuracion);
     cargar_nivel(&juego, configuracion);
     grabar(juego, grabacion);
 
@@ -512,8 +553,10 @@ void iniciar_juego(configuracion_t configuracion, FILE* grabacion, FILE* ranking
         grabar(juego, grabacion);
     }
 
+    rank.puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
     mostrar_mensaje_final(estado_juego(juego));
+    printf("Lograste %i puntos\n", rank.puntaje);
     /*
-     * grabar ranking
+     * grabar rank
      */
 }

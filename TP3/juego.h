@@ -13,12 +13,11 @@ typedef struct rank {
  * Se podrá grabar la partida si se tienen los permisos suficientes.
  * El rank se guardará si se tienen los permisos suficientes.
  */
-void iniciar_juego(configuracion_t configuracion, FILE* grabacion, rank_t* rank);
-
+void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank);
 
 /*
- * Se mostrará en pantalla la grabación de un juego en la velocidad deseada.
+ *
  */
-void reproducir(FILE* grabacion, float velocidad);
+void reproducir_juego(char grabacion[], float velocidad);
 
 #endif /*__JUEGO_H__*/

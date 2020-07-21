@@ -306,10 +306,10 @@ void mostrar_analisis(int viento, int humedad, char elfos, char enanos) {
 //~ pre:
 //~ pos: se obtiene una fecha válida ingresada por el usuario
 void preguntar_dia_del_mes(int *dia) {
-    printf("Día del mes: (De 1 a 30)\nDía:");
+    printf("\nDía del mes: (De 1 a 30)\nDía: ");
     scanf("%i", dia);
     while (!es_dia_de_mes(*dia)) {
-        printf("Eso no es un día válido... Del 1 al 30...\nDía: ");
+        printf("\tEso no es un día válido... Del 1 al 30...\nDía: ");
         scanf("%i", dia);
     }
 }
@@ -317,11 +317,11 @@ void preguntar_dia_del_mes(int *dia) {
 //~ pre:
 //~ pos: se obtiene una hora del día válida ingresada por el usuario
 void preguntar_hora_del_dia(char *hora) {
-    printf("Hora del día: ");
+    printf("\nHora del día: ");
     printf("[%c]Mañana [%c]Tarde [%c]Noche\nYa es de ", MANIANA, TARDE, NOCHE);
     scanf(" %c", hora);
         while (!es_hora_de_dia(*hora)) {
-        printf("No entiendo qué me estas diciendo...\n");
+        printf("\tNo entiendo qué me estas diciendo...\n");
         printf("[%c]Mañana [%c]Tarde [%c]Noche\nYa es de ", MANIANA, TARDE, NOCHE);
         scanf(" %c", hora);
     }
@@ -330,7 +330,7 @@ void preguntar_hora_del_dia(char *hora) {
 //~ pre: letra representa a LEGOLAS o GIMLI
 //~ pos: se le pide al usuario ingresar un dato que corresponda al pie con el que se levantó L o G, que puede ser PIE_IZQUIERDO o PIE_DERECHO
 void preguntar_pie(char *pie, char letra) {
-    printf("\tPie con el que se levantó: [%c]Izquierdo [%c]Derecho \n\tPie: ", PIE_IZQUIERDO, PIE_DERECHO);
+    printf("\n\tPie con el que se levantó: [%c]Izquierdo [%c]Derecho \n\tPie: ", PIE_IZQUIERDO, PIE_DERECHO);
     scanf(" %c", pie);
     while (!es_pie_valido(*pie)) {
         if (es_legolas(letra)) printf("\tLegolas"); else printf("\tGrimli");
@@ -343,7 +343,7 @@ void preguntar_pie(char *pie, char letra) {
 //~ pre: letra representa a LEGOLAS o GIMLI
 //~ pos: se le pide al usuario ingresar un dato que corresponda a lo que cenó L o G, que puede ser ENSALADA, HAMBURGUESA, PIZZA o GUISO
 void preguntar_cena(char *cena, char letra) {
-    printf("\tCena de la noche anterior: [%c]Ensalada [%c]Hamburguesa [%c]Pizza [%c]Guiso \n\tCena: ", ENSALADA, HAMBURGUESA, PIZZA, GUISO);
+    printf("\n\tCena de la noche anterior: [%c]Ensalada [%c]Hamburguesa [%c]Pizza [%c]Guiso \n\tCena: ", ENSALADA, HAMBURGUESA, PIZZA, GUISO);
     scanf(" %c", cena);
     while (!es_cena_valida(*cena)) {
         if (es_legolas(letra)) printf("\tEso no es comida de elfos... Qué cenó Legolas?\n");
@@ -356,7 +356,7 @@ void preguntar_cena(char *cena, char letra) {
 //~ pre: letra representa a LEGOLAS o GIMLI
 //~ pos: se le pide al usuario la cantidad de horas que durmió L o G, que puede ir entre HORAS_MIN_POCO_DESCANSO y HORAS_MAX horas.
 void preguntar_horas_dormidas(int *horas) {
-    printf("\tCantidad de horas que durmió: ");
+    printf("\n\tCantidad de horas que durmió: ");
     scanf("%i", horas);
     while (!esta_en_el_rango_de_horas(*horas)) {
         printf("\tUn lider no puede dormir esa cantidad de horas en plena guerra! Son permitidas de %i a %i! \n\tHoras: ", HORAS_MIN_POCO_DESCANSO, HORAS_MAX);
@@ -367,7 +367,7 @@ void preguntar_horas_dormidas(int *horas) {
 //~ pre: letra sirve para identificar a LEGOLAS o GIMLI
 //~ pos: llama a los procedimientos para que interactuen con el usuario y los pasa al programa
 void mostrar_preguntas_lider(char *pie, char *cena, int *horas_dormidas, char letra) {
-    if (es_legolas(letra)) printf("\nLegolas:\n"); else printf("\nGimli:\n");
+    if (es_legolas(letra)) printf("\nLegolas:"); else printf("\nGimli:");
     preguntar_pie(pie, letra);
     preguntar_cena(cena, letra);
     preguntar_horas_dormidas(horas_dormidas);
@@ -384,7 +384,7 @@ void animos(int* viento , int* humedad , char* animo_legolas , char* animo_gimli
     int gimli_horas_dormidas;
 
     system("clear");
-    printf("Reporte de batalla\n\n");
+    printf("Reporte de batalla\n");
 
     preguntar_dia_del_mes(&dia);
     preguntar_hora_del_dia(&hora);

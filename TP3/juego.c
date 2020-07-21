@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include <math.h>
 #include <time.h>
 #include "defendiendo_torres.h"
@@ -23,8 +24,7 @@
 #define AGREGADO 0
 
 const char IGNORAR = 'X';
-const float DELAY = 0.5f;
-const float DELAY_REPRODUCCION = 1.0f;
+const float DELAY = 0.4f, DELAY_REPRODUCCION = 1.0f;
 
 const int MINIMO_MATRIZ = 0, MAXIMO_MATRIZ_MENOR = 14, MAXIMO_MATRIZ_MAYOR = 19;
 const int AL_ESTE = 14, AL_OESTE = 5;
@@ -32,24 +32,22 @@ const int AL_ESTE = 14, AL_OESTE = 5;
 const int ENANOS_INICIALES_PRIMER_NIVEL = 5,
           ELFOS_INICIALES_PRIMER_NIVEL = 0,
           ENANOS_INICIALES_SEGUND_NIVEL = 0,
-          ELFOS_INICIALES_SEGUND_NIVEL = 5,
+          ELFOS_INICIALES_SEGUND_NIVEL = 3,
           ENANOS_INICIALES_TERCER_NIVEL = 3,
           ELFOS_INICIALES_TERCER_NIVEL = 3,
-          ENANOS_INICIALES_CUARTO_NIVEL = 4,
-          ELFOS_INICIALES_CUARTO_NIVEL = 4,
-          COSTE_ENANOS_TORRE_1 = 50,
-          COSTE_ENANOS_TORRE_2 = 0,
-          COSTE_ELFOS_TORRE_1 = 0,
-          COSTE_ELFOS_TORRE_2 = 50,
-          ORCOS_PARA_AGREGAR_ENANO = 25,
+          ENANOS_INICIALES_CUARTO_NIVEL = 3,
+          ELFOS_INICIALES_CUARTO_NIVEL = 3,
+          COSTO_ENANOS_TORRE_1 = 50,
+          COSTO_ENANOS_TORRE_2 = 0,
+          COSTO_ELFOS_TORRE_1 = 0,
+          COSTO_ELFOS_TORRE_2 = 50,
+          COSTO_INVALIDO = 0,
           ORCOS_PARA_AGREGAR_DEFENSOR = 50,
-          TORRE_1 = 1,
-          TORRE_2 = 2;
+          ORCOS_PARA_AGREGAR_PRIMERO = 25,
+          TORRE_1 = 1, TORRE_2 = 2;
 
-const int MAX_ENEMIGOS_PRIMER_NIVEL = 100,
-          MAX_ENEMIGOS_SEGUND_NIVEL = 200,
-          MAX_ENEMIGOS_TERCER_NIVEL = 300,
-          MAX_ENEMIGOS_CUARTO_NIVEL = 500;
+const int MAX_ENEMIGOS_PRIMER_NIVEL = 100, MAX_ENEMIGOS_SEGUND_NIVEL = 200,
+          MAX_ENEMIGOS_TERCER_NIVEL = 300, MAX_ENEMIGOS_CUARTO_NIVEL = 500;
 
 const int SIN_CAMINO = 0, SIN_DEFENSORES = 0, SIN_ENEMIGOS = 0;
 
@@ -227,12 +225,6 @@ void obtener_camino_2(juego_t *juego, char camino[MAX_ARCHIVO]) {
 
 
 
-void camino_segun_configuracion() {
-
-}
-
-
-
 int defensores_segun_configuracion(int nivel_actual, char tipo, configuracion_t configuracion) {
     int defensores;
     if (tipo == ENANOS) {
@@ -254,7 +246,6 @@ int defensores_segun_configuracion(int nivel_actual, char tipo, configuracion_t 
     }
     return defensores;
 }
-
 
 
 
@@ -287,35 +278,35 @@ void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) 
 
 
 int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t configuracion){
-    int coste;
+    int costo;
     if (tipo == ENANOS && torre == TORRE_1) {
-        coste = configuracion.coste_enanos_torre_1;
-        if (coste == INDEFINIDO) coste = COSTE_ENANOS_TORRE_1;
+        costo = configuracion.costo_enanos_torre_1;
+        if (costo == INDEFINIDO) costo = COSTO_ENANOS_TORRE_1;
     } else if (tipo == ENANOS && torre == TORRE_2) {
-        coste = configuracion.coste_enanos_torre_2;
-        if (coste == INDEFINIDO) coste = COSTE_ENANOS_TORRE_2;
+        costo = configuracion.costo_enanos_torre_2;
+        if (costo == INDEFINIDO) costo = COSTO_ENANOS_TORRE_2;
     } else if (tipo == ELFOS && torre == TORRE_1) {
-        coste = configuracion.coste_elfos_torre_1;
-        if (coste == INDEFINIDO) coste = COSTE_ELFOS_TORRE_1;
+        costo = configuracion.costo_elfos_torre_1;
+        if (costo == INDEFINIDO) costo = COSTO_ELFOS_TORRE_1;
     } else {
-        coste = configuracion.coste_elfos_torre_2;
-        if (coste == INDEFINIDO) coste = COSTE_ELFOS_TORRE_2;
+        costo = configuracion.costo_elfos_torre_2;
+        if (costo == INDEFINIDO) costo = COSTO_ELFOS_TORRE_2;
     }
-    return coste;
+    return costo;
 }
-
 
 
 
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un enano al juego.
-bool puede_agregar_enanos(juego_t juego, configuracion_t configuracion) {
+bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
     int costo_torre_1 = costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion);
     int costo_torre_2 = costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion);
     return (
-        (costo_torre_1 && juego.torres.resistencia_torre_1 > costo_torre_1)
-        && (costo_torre_2 && juego.torres.resistencia_torre_2 > costo_torre_2)
-        && (juego.torres.enanos_extra > SIN_DEFENSORES)
+        (costo_torre_1 > COSTO_INVALIDO || costo_torre_2 > COSTO_INVALIDO)
+        && (torres.resistencia_torre_1 > costo_torre_1)
+        && (torres.resistencia_torre_2 > costo_torre_2)
+        && (torres.enanos_extra > SIN_DEFENSORES)
     );
 }
 
@@ -323,13 +314,14 @@ bool puede_agregar_enanos(juego_t juego, configuracion_t configuracion) {
 
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un elfo al juego.
-bool puede_agregar_elfos(juego_t juego, configuracion_t configuracion) {
+bool puede_agregar_elfos(torres_t torres, configuracion_t configuracion) {
     int costo_torre_1 = costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion);
     int costo_torre_2 = costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion);
     return (
-        (costo_torre_1 && juego.torres.resistencia_torre_1 > costo_torre_1)
-        && (costo_torre_2 && juego.torres.resistencia_torre_2 > costo_torre_2)
-        && (juego.torres.elfos_extra > SIN_DEFENSORES)
+        (costo_torre_1 > COSTO_INVALIDO || costo_torre_2 > COSTO_INVALIDO)
+        && (torres.resistencia_torre_1 > costo_torre_1)
+        && (torres.resistencia_torre_2 > costo_torre_2)
+        && (torres.elfos_extra > SIN_DEFENSORES)
     );
 }
 
@@ -337,8 +329,8 @@ bool puede_agregar_elfos(juego_t juego, configuracion_t configuracion) {
 
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Devuelve verdadero si se permite agregar un elfo o un enano al juego.
-bool hay_extra_disponible(juego_t juego, configuracion_t configuracion) {
-    return puede_agregar_enanos(juego, configuracion) || puede_agregar_elfos(juego, configuracion);
+bool hay_extra_disponible(torres_t torres, configuracion_t configuracion) {
+    return puede_agregar_enanos(torres, configuracion) || puede_agregar_elfos(torres, configuracion);
 }
 
 
@@ -346,11 +338,11 @@ bool hay_extra_disponible(juego_t juego, configuracion_t configuracion) {
 //~ Pre: Recibe la cantidad de enemigos que salieron en el nivel y si quedan defensores extras.
 //~ Pos: Devuelve verdadero si se dan todas las condiciones para agregar un defensor extra al juego.
 bool se_puede_agregar_extra(juego_t juego, configuracion_t configuracion) {
-    bool primera_condicion = hay_extra_disponible(juego, configuracion);
+    bool primera_condicion = hay_extra_disponible(juego.torres, configuracion);
     bool segunda_condicion = juego.nivel.tope_enemigos > 0 && juego.nivel.tope_enemigos < juego.nivel.max_enemigos_nivel;
     bool tercera_condicion;
     if (primer_nivel(juego))
-        tercera_condicion = juego.nivel.tope_enemigos % ORCOS_PARA_AGREGAR_ENANO == 0;
+        tercera_condicion = juego.nivel.tope_enemigos % ORCOS_PARA_AGREGAR_PRIMERO == 0;
     else
         tercera_condicion = juego.nivel.tope_enemigos % ORCOS_PARA_AGREGAR_DEFENSOR == 0;
 
@@ -361,10 +353,10 @@ bool se_puede_agregar_extra(juego_t juego, configuracion_t configuracion) {
 
 //~ Pre: Recibe un tipo ingresado por el usuario.
 //~ Pos: Devuelve verdadero si la respuesta es ENANOS, ELFOS o el usuario quiere IGNORAR el mensaje.
-bool es_tipo_valido(char tipo, juego_t juego, configuracion_t configuracion) {
+bool es_tipo_valido(char tipo, torres_t torres, configuracion_t configuracion) {
     return (
-        (tipo == ENANOS && puede_agregar_enanos(juego, configuracion))
-        || (tipo == ELFOS && puede_agregar_enanos(juego, configuracion))
+        (tipo == ENANOS && puede_agregar_enanos(torres, configuracion))
+        || (tipo == ELFOS && puede_agregar_enanos(torres, configuracion))
         || (tipo == IGNORAR)
     );
 }
@@ -372,18 +364,18 @@ bool es_tipo_valido(char tipo, juego_t juego, configuracion_t configuracion) {
 
 //~ Pre: Recibe una instancia de juego y un tipo de defensor sin inicializar.
 //~ Pos: El usuario ingresa un tipo valido, para agregar un defensor o ignorar el mensaje.
-void pedir_tipo(juego_t juego, char *tipo, configuracion_t configuracion) {
-    bool hay_enanos_disponibles = puede_agregar_enanos(juego, configuracion);
-    bool hay_elfos_disponibles = puede_agregar_elfos(juego, configuracion);
+void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
+    bool hay_enanos_disponibles = puede_agregar_enanos(torres, configuracion);
+    bool hay_elfos_disponibles = puede_agregar_elfos(torres, configuracion);
 
     printf("\nPodes agregar un defensor de las tropas de");
     if (hay_enanos_disponibles)
-        printf(" %c (%i)", ENANOS, juego.torres.enanos_extra);
+        printf(" %c (%i)", ENANOS, torres.enanos_extra);
 
     if (hay_elfos_disponibles) {
         if (hay_enanos_disponibles)
             printf(" o de las tropas de");
-        printf(" %c (%i)", ELFOS, juego.torres.elfos_extra);
+        printf(" %c (%i)", ELFOS, torres.elfos_extra);
     }
 
     printf("\nRecuerda que agregar un %c costará %i a la Torre1 y %i a la Torre 2.\n", ENANOS,
@@ -398,7 +390,7 @@ void pedir_tipo(juego_t juego, char *tipo, configuracion_t configuracion) {
     printf("%c(ignorar): ", IGNORAR);
 
     scanf(" %c", tipo);
-    while (!es_tipo_valido(*tipo, juego, configuracion)) {
+    while (!es_tipo_valido(*tipo, torres, configuracion)) {
         printf("Intente de nuevo: ");
         if (hay_enanos_disponibles) printf("%c/", ENANOS);
         if (hay_elfos_disponibles) printf("%c/", ELFOS);
@@ -431,7 +423,7 @@ void agregar_defensor_extra(juego_t *juego, configuracion_t configuracion) {
     char tipo;
     coordenada_t posicion;
 
-    pedir_tipo(*juego, &tipo, configuracion);
+    pedir_tipo(juego->torres, &tipo, configuracion);
     if (tipo == IGNORAR) {
         printf("\nNo se han agregado defensores.\n");
         return;
@@ -453,15 +445,10 @@ void agregar_defensor_extra(juego_t *juego, configuracion_t configuracion) {
 //~ Pos: Elimina los enemigos de una instancia anterior y define max_enemigos_nivel de nivel.
 void cargar_enemigos(juego_t *juego){
     juego->nivel.tope_enemigos = SIN_ENEMIGOS;
-
-    if (primer_nivel(*juego))
-        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_PRIMER_NIVEL;
-    else if (segundo_nivel(*juego))
-        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_SEGUND_NIVEL;
-    else if (tercer_nivel(*juego))
-        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_TERCER_NIVEL;
-    else
-        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_CUARTO_NIVEL;
+    if (primer_nivel(*juego)) juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_PRIMER_NIVEL;
+    else if (segundo_nivel(*juego)) juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_SEGUND_NIVEL;
+    else if (tercer_nivel(*juego)) juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_TERCER_NIVEL;
+    else juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_CUARTO_NIVEL;
 }
 
 
@@ -556,43 +543,50 @@ int recursos_usados (torres_t torres, configuracion_t configuracion) {
         recursos += defensores_segun_configuracion(i+1, ENANOS, configuracion);
         recursos += defensores_segun_configuracion(i+1, ELFOS, configuracion);
     }
-    printf("Recursos: %i\n", recursos);
     return recursos;
 }
 
 
 
-void grabar(juego_t juego, FILE* grabacion) {
-    // if (grabacion != NULL) fwrite(&juego, sizeof(juego_t), 1, grabacion);
-}
-
-
-
-void reproducir(FILE* grabacion, float velocidad) {
+void reproducir_juego(char grabacion[], float velocidad) {
     juego_t juego;
-    size_t leido = fread(&juego, sizeof(juego_t), 1, grabacion);
-    if (velocidad == INDEFINIDO) velocidad = DELAY_REPRODUCCION;
-    while (leido != EOF) {
-        limpiar_y_mostrar(juego, velocidad);
-        leido = fread(&juego, sizeof(juego_t), 1, grabacion);
+    FILE* archivo;
+    archivo = fopen(grabacion, "r");
+    if (!archivo) {
+        printf("No se pudo abrir la grabación.\n");
+        return;
     }
+    if (velocidad == INDEFINIDO) velocidad = DELAY_REPRODUCCION;
+    fread(&juego, sizeof(juego_t), 1, archivo);
+    while (!feof(archivo)) {
+        limpiar_y_mostrar(juego, velocidad);
+        fread(&juego, sizeof(juego_t), 1, archivo);
+    }
+    fclose(archivo);
 }
 
 
 
-void iniciar_juego(configuracion_t configuracion, FILE* grabacion, rank_t *rank) {
+void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank) {
     srand((unsigned)time(NULL));
     int recursos, viento, humedad;
     char animo_legolas, animo_gimli;
     juego_t juego;
+    FILE* archivo;
+    if (strcmp(grabacion, "")) {
+        archivo = fopen(grabacion, "w");
+        if (!archivo) {
+            printf("No se pudo iniciar la grabacion\n");
+            return;
+        }
+    }
 
     animos(&viento, &humedad, &animo_legolas, &animo_gimli);
     inicializar_juego(&juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
     recursos = recursos_usados(juego.torres, configuracion);
     cargar_nivel(&juego, configuracion);
 
-    grabar(juego, grabacion);
-
+    if (archivo) fwrite(&juego, sizeof(juego_t), 1, archivo);
     while (estado_juego(juego) == JUGANDO) {
         if (estado_nivel(juego.nivel) == GANADO) {
             juego.nivel_actual++;
@@ -606,9 +600,9 @@ void iniciar_juego(configuracion_t configuracion, FILE* grabacion, rank_t *rank)
             limpiar_y_mostrar(juego, configuracion.velocidad);
             }
         jugar_turno(&juego);
-        grabar(juego, grabacion);
+        if (archivo) fwrite(&juego, sizeof(juego_t), 1, archivo);
     }
-
+    if (archivo) fclose(archivo);
     mostrar_mensaje_final(estado_juego(juego));
     rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
     printf("\nLograste %i puntos\n", rank->puntaje);

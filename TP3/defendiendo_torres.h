@@ -68,10 +68,10 @@ typedef struct configuracion {
     int max_niveles;
     int enanos_inicio[MAX_NIVELES];
     int elfos_inicio[MAX_NIVELES];
-    int coste_enanos_torre_1;
-    int coste_enanos_torre_2;
-    int coste_elfos_torre_1;
-    int coste_elfos_torre_2;
+    int costo_enanos_torre_1;
+    int costo_enanos_torre_2;
+    int costo_elfos_torre_1;
+    int costo_elfos_torre_2;
     float velocidad;
     char caminos[MAX_ARCHIVO];
 } configuracion_t;

@@ -25,10 +25,8 @@ const char  ARCHIVO_RANKING[] = "ranking",
             ARCHIVO_RANKING_AUX[] = "tmp.csv",
             FORMATO_LECTURA_RANKING[] = "%[^;];%i\n",
             FORMATO_ESCRITURA_RANKING[] = "%s;%i\n",
-            FORMATO_IMPRESION_RANKING[] = " %i. %s\t\t\t%i\n",
-            FORMATO_ENCABEZADO_RANKING[] = "JUGADOR\t\t\t\tPTOS.\n";
-
-const float VELOCIDAD_DEFAULT = 1;
+            FORMATO_ENCABEZADO_RANKING[] = "| º| |PTOS.||JUGADOR\n",
+            FORMATO_IMPRESION_RANKING[] =  "|%i.  %i  - %s\n";
 
 const int   LIMITE_ARGUMENTOS_RANKING = 4, LIMITE_ARGUMENTOS_CREAR_CAMINOS = 3,
             LIMITE_ARGUMENTOS_CREAR_CONFIGURACION = 3, LIMITE_ARGUMENTOS_VER_REPETICION = 4,
@@ -84,7 +82,7 @@ bool ingresa_argumento(int argc) {
 
 
 
-bool ingresa_etiqueta(char archivo[], const char etiqueta[]) {
+bool ingresa_etiqueta(char archivo[MAX_ARCHIVO], const char etiqueta[]) {
   return !strncmp(archivo, etiqueta, strlen(etiqueta));
 }
 
@@ -105,7 +103,7 @@ bool tiene_extension_valida(char archivo[MAX_ARCHIVO], const char extension[]) {
 
 
 
-bool ingresa_archivo(char archivo[]) {
+bool ingresa_archivo(char archivo[MAX_ARCHIVO]) {
   return strcmp(archivo, SIN_ARCHIVO) != 0;
 }
 
@@ -319,8 +317,8 @@ void comprobar_ver_repeticion(int argc, char *argv[], char grabacion[MAX_ARCHIVO
     if (argc > LIMITE_ARGUMENTOS_VER_REPETICION) {
         printf("Mucho argumento\n");
         *es_valido = false;
-    } else if (!ingresa_argumento(argc) && !ingresa_grabacion(argc, argv, grabacion)) {
-        printf("Tiene que ingresarse un archivo de grabacion%s\n", EXTENSION_GRABACION);
+    } else if (!ingresa_argumento(argc) || !ingresa_grabacion(argc, argv, grabacion)) {
+        printf("Tiene que ingresarse un %smi_grabacion%s\n", GRABACION, EXTENSION_GRABACION);
         *es_valido = false;
     }  else if (!tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
         quitar_extension(grabacion, EXTENSION);
@@ -328,7 +326,7 @@ void comprobar_ver_repeticion(int argc, char *argv[], char grabacion[MAX_ARCHIVO
         *es_valido = false;
     } else {
         if (!ingresa_velocidad(argc, argv, velocidad)) {
-            *velocidad = VELOCIDAD_DEFAULT;
+            *velocidad = (float) INDEFINIDO;
         } else if (!*velocidad) {
             printf("Hubo problemas con la velocidad ingresada\n");
         }
@@ -366,7 +364,7 @@ void comprobar_jugar_partida(int argc, char *argv[], char config[MAX_ARCHIVO], c
 
 
 //~ Devuelve true si archivo pudo ser inicializado. Si no, muestra en pantalla que no se pudo abrir el archivo.
-bool se_puede_abrir(FILE* archivo, char nombre[MAX_ARCHIVO]) {
+bool se_puede_abrir(FILE* archivo, const char nombre[MAX_ARCHIVO]) {
     if(!archivo) {
         printf("No se pudo abrir %s, campeón\n", nombre);
     }
@@ -389,35 +387,41 @@ void obtener_ranking(char ranking[MAX_ARCHIVO], char config[MAX_ARCHIVO]) {
 
 
 
-void grabar_rank_aux(char ranking[], rank_t rank) {
-    int leido;
+void grabar_rank_aux(char config[MAX_ARCHIVO], rank_t rank) {
     rank_t rank_aux;
+    char ranking[MAX_ARCHIVO];
     FILE *archivo, *archivo_aux;
-    archivo = fopen(ranking, LECTURA);
-    if (!se_puede_abrir(archivo, ranking)) return;
+    obtener_ranking(ranking, config);
     archivo_aux = fopen(ARCHIVO_RANKING_AUX, ESCRITURA);
-    if (!se_puede_abrir(archivo_aux, (char*) ARCHIVO_RANKING_AUX)) {
-        fclose(archivo);
-        return;
-    }
-    leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
-    while (!leido) {
-        if (rank.puntaje > rank_aux.puntaje) {
-            fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
-            rank = rank_aux;
+    if (!se_puede_abrir(archivo_aux, ARCHIVO_RANKING_AUX)) return;
+
+    archivo = fopen(ranking, LECTURA);
+    if (se_puede_abrir(archivo, ARCHIVO_RANKING)){
+        fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
+        while (!feof(archivo)) {
+            if (rank.puntaje > rank_aux.puntaje) {
+                fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
+                rank = rank_aux;
+            } else {
+                fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank_aux.nombre, rank_aux.puntaje);
+            }
+            fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
         }
-        leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
+        fclose(archivo);
+    } else {
+        fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
     }
     fclose(archivo_aux);
-    fclose(archivo);
     rename(ARCHIVO_RANKING_AUX, ranking);
 }
 
 
 
-void grabar_rank(char config[], rank_t rank) {
-    grabar_rank_aux(config, rank);
-    if (ingresa_archivo(config)) grabar_rank((char *) SIN_ARCHIVO, rank);
+void grabar_rank(char config[MAX_ARCHIVO], rank_t rank) {
+    if (ingresa_archivo(config)) {
+        grabar_rank_aux(config, rank);
+    }
+    grabar_rank_aux((char *)SIN_ARCHIVO, rank);
 }
 
 
@@ -430,6 +434,9 @@ void crear_camino(int nivel_actual) {
      * crear_camino(4)
      */
 }
+
+
+
 void inicializar_configuracion(configuracion_t *configuracion) {
     configuracion->max_niveles = MAX_NIVELES;
     configuracion->juego.torres.resistencia_torre_1 = INDEFINIDO;
@@ -445,10 +452,10 @@ void inicializar_configuracion(configuracion_t *configuracion) {
         configuracion->enanos_inicio[i] = INDEFINIDO;
         configuracion->elfos_inicio[i] = INDEFINIDO;
     }
-    configuracion->coste_enanos_torre_1 = INDEFINIDO;
-    configuracion->coste_enanos_torre_2 = INDEFINIDO;
-    configuracion->coste_elfos_torre_1 = INDEFINIDO;
-    configuracion->coste_elfos_torre_2 = INDEFINIDO;
+    configuracion->costo_enanos_torre_1 = INDEFINIDO;
+    configuracion->costo_enanos_torre_2 = INDEFINIDO;
+    configuracion->costo_elfos_torre_1 = INDEFINIDO;
+    configuracion->costo_elfos_torre_2 = INDEFINIDO;
     configuracion->velocidad = INDEFINIDO;
     strcpy(configuracion->caminos, "-1");
 }
@@ -471,51 +478,17 @@ void crear_configuracion() {
 
 
 
-void escribir_configuracion(configuracion_t configuracion, FILE* archivo) {
-    juego_t juego = configuracion.juego;
-    torres_t torres = juego.torres;
-    fprintf(archivo, RESISTENCIA_TORRES, torres.resistencia_torre_1, torres.resistencia_torre_2);
-    fprintf(archivo, ENANOS_INICIO, configuracion.enanos_inicio[0], configuracion.enanos_inicio[1], configuracion.enanos_inicio[2], configuracion.enanos_inicio[3]);
-    fprintf(archivo, ELFOS_INICIO, configuracion.elfos_inicio[0], configuracion.elfos_inicio[1], configuracion.elfos_inicio[2], configuracion.elfos_inicio[3]);
-    fprintf(archivo, ENANOS_EXTRA, torres.enanos_extra, configuracion.coste_enanos_torre_1, configuracion.coste_enanos_torre_2);
-    fprintf(archivo, ELFOS_EXTRA, torres.elfos_extra, configuracion.coste_elfos_torre_1, configuracion.coste_elfos_torre_2);
-    fprintf(archivo, ENANOS_ANIMO, juego.fallo_gimli, juego.critico_gimli);
-    fprintf(archivo, ELFOS_ANIMO, juego.fallo_legolas, juego.critico_legolas);
-    fprintf(archivo, VELOCIDAD_CONFIG, configuracion.velocidad);
-    fprintf(archivo, CAMINOS, configuracion.caminos);
-}
-
-
-
-void cargar_configuracion(configuracion_t *configuracion, FILE* archivo) {
-    //~ juego_t juego = (*configuracion).juego;
-    //~ torres_t torres = juego.torres;
-    //~ if (!fscanf(archivo, RESISTENCIA_TORRES, &(torres.resistencia_torre_1), &(torres.resistencia_torre_2))) {
-        //~ torres.resistencia_torre_1 = INDEFINIDO;
-        //~ torres.resistencia_torre_2 = INDEFINIDO;
-    //~ }
-    //~ if (!fscanf(archivo, ENANOS_INICIO, &((*configuracion).enanos_inicio[0]), &((*configuracion).enanos_inicio[1]), &((*configuracion).enanos_inicio[2]), &((*configuracion).enanos_inicio[3]))) {
-        //~ configuracion->enanos_inicio[0] = INDEFINIDO;
-        //~ configuracion->enanos_inicio[1] = INDEFINIDO;
-        //~ configuracion->enanos_inicio[2] = INDEFINIDO;
-        //~ configuracion->enanos_inicio[3] = INDEFINIDO;
-    //~ };
-    //~ if (!fscanf(archivo, ELFOS_INICIO, &((*configuracion).elfos_inicio[0]), (&(*configuracion).elfos_inicio[1]), &((*configuracion).elfos_inicio[2]), &((*configuracion).elfos_inicio[3]))) {
-        //~ configuracion->elfos_inicio[0] = INDEFINIDO;
-        //~ configuracion->elfos_inicio[1] = INDEFINIDO;
-        //~ configuracion->elfos_inicio[2] = INDEFINIDO;
-        //~ configuracion->elfos_inicio[3] = INDEFINIDO;
-    //~ }
-    //~ if (!fscanf(archivo, ENANOS_EXTRA, &(torres.enanos_extra), &((*configuracion).coste_enanos_torre_1), &((*configuracion).coste_enanos_torre_2))) {
-        //~ torres.enanos_extra = INDEFINIDO;
-        //~ configuracion->coste_enanos_torre_1 = INDEFINIDO;
-        //~ configuracion->coste_enanos_torre_2 = INDEFINIDO;
-    //~ }
-    //~ fscanf(archivo, ELFOS_EXTRA, &(torres.elfos_extra), &((*configuracion).coste_elfos_torre_1), &((*configuracion).coste_elfos_torre_2));
-    //~ fscanf(archivo, ENANOS_ANIMO, &(juego.fallo_gimli), &(juego.critico_gimli));
-    //~ fscanf(archivo, ELFOS_ANIMO, &(juego.fallo_legolas), &(juego.critico_legolas));
-    //~ fscanf(archivo, VELOCIDAD_CONFIG, &((*configuracion).velocidad));
-    //~ fscanf(archivo, CAMINOS, (*configuracion).caminos);
+void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]) {
+    FILE* archivo;
+    inicializar_configuracion(configuracion);
+    if (ingresa_archivo(config)) {
+        archivo = fopen(config, LECTURA);
+        if (!se_puede_abrir(archivo, config)) {
+            printf("Probá con otra configuración.\n");
+            return;
+        }
+        fclose(archivo);
+    }
 }
 
 
@@ -533,7 +506,7 @@ void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
     leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
     printf(FORMATO_ENCABEZADO_RANKING);
     while ((leido != EOF) && (i < cant_a_listar || cant_a_listar == INDEFINIDO)) {
-        printf(FORMATO_IMPRESION_RANKING, i, rank.nombre, rank.puntaje);
+        printf(FORMATO_IMPRESION_RANKING, i, rank.puntaje, rank.nombre);
         leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
         i++;
     }
@@ -557,12 +530,25 @@ void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
 
 
 void ejecutar_crear_configuracion(char config[MAX_ARCHIVO]) {
-    FILE* archivo = fopen(config, ESCRITURA);
-    if (!se_puede_abrir(archivo, config)) return;
+    FILE * archivo;
     configuracion_t configuracion;
+    juego_t juego;
+    torres_t torres;
+    archivo = fopen(config, ESCRITURA);
+    if (!se_puede_abrir(archivo, config)) return;
     inicializar_configuracion(&configuracion);
     crear_configuracion(&configuracion);
-    escribir_configuracion(configuracion, archivo);
+    juego = configuracion.juego;
+    torres = juego.torres;
+    fprintf(archivo, RESISTENCIA_TORRES, torres.resistencia_torre_1, torres.resistencia_torre_2);
+    fprintf(archivo, ENANOS_INICIO, configuracion.enanos_inicio[0], configuracion.enanos_inicio[1], configuracion.enanos_inicio[2], configuracion.enanos_inicio[3]);
+    fprintf(archivo, ELFOS_INICIO, configuracion.elfos_inicio[0], configuracion.elfos_inicio[1], configuracion.elfos_inicio[2], configuracion.elfos_inicio[3]);
+    fprintf(archivo, ENANOS_EXTRA, torres.enanos_extra, configuracion.costo_enanos_torre_1, configuracion.costo_enanos_torre_2);
+    fprintf(archivo, ELFOS_EXTRA, torres.elfos_extra, configuracion.costo_elfos_torre_1, configuracion.costo_elfos_torre_2);
+    fprintf(archivo, ENANOS_ANIMO, juego.fallo_gimli, juego.critico_gimli);
+    fprintf(archivo, ELFOS_ANIMO, juego.fallo_legolas, juego.critico_legolas);
+    fprintf(archivo, VELOCIDAD_CONFIG, configuracion.velocidad);
+    fprintf(archivo, CAMINOS, configuracion.caminos);
     fclose(archivo);
 }
 
@@ -570,41 +556,17 @@ void ejecutar_crear_configuracion(char config[MAX_ARCHIVO]) {
 
 
 void ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
-    FILE* archivo = fopen(grabacion, LECTURA);
-    if (!se_puede_abrir(archivo, grabacion)) return;
-    reproducir(archivo, velocidad);
-    fclose(archivo);
+    reproducir_juego(grabacion, velocidad);
 }
 
 
 
 
 void ejecutar_jugar_partida(char config[MAX_ARCHIVO], char grabacion[MAX_ARCHIVO]) {
-    FILE *archivo_config, *archivo_grabacion;
     configuracion_t configuracion;
     rank_t rank;
-
-    inicializar_configuracion(&configuracion);
-    if (ingresa_archivo(config)) {
-        archivo_config = fopen(config, LECTURA);
-        if (!se_puede_abrir(archivo_config, config)) {
-            printf("Probá con otra configuración.\n");
-            return;
-        }
-        cargar_configuracion(&configuracion, archivo_config);
-        fclose(archivo_config);
-    }
-
-    if (ingresa_archivo(grabacion)) {
-        archivo_grabacion = fopen(grabacion, ESCRITURA);
-        if (!se_puede_abrir(archivo_grabacion, grabacion)) {
-          printf("Ocurrió un problema y no se puede grabar el juego.\n");
-          return;
-        }
-    }
-    iniciar_juego(configuracion, archivo_grabacion, &rank);
-    if (archivo_grabacion != NULL) fclose(archivo_grabacion);
-
+    cargar_configuracion(&configuracion, config);
+    iniciar_juego(configuracion, grabacion, &rank);
     grabar_rank(config, rank);
     ejecutar_ranking(INDEFINIDO, config);
 }

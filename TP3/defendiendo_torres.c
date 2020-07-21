@@ -22,8 +22,6 @@
 #define GANADO 1
 #define PERDIDO -1
 
-const int   INDEFINIDO = -1;
-
 const int   TAMANIO_MENOR = 15, TAMANIO_MAYOR = 20;
 
 const int   ELFOS_EXTRAS = 10, ENANOS_EXTRAS = 10;
@@ -60,10 +58,10 @@ const char  ENCABEZADO_A[] = " ================================================\
 //~ Pre: Recibe las torres de un juego sin inicializar
 //~ Pos: Inicializa los valores de las torres en sus valores máximos.
 void inicializar_torres(torres_t* torres) {
-    if (torres->resistencia_torre_1 == INDEFINIDO) (*torres).resistencia_torre_1 = MAXIMO_RESISTENCIA;
-    if (torres->resistencia_torre_2 == INDEFINIDO) (*torres).resistencia_torre_2 = MAXIMO_RESISTENCIA;
-    if (torres->enanos_extra == INDEFINIDO) (*torres).enanos_extra = ENANOS_EXTRAS;
-    if (torres->elfos_extra == INDEFINIDO) (*torres).elfos_extra = ELFOS_EXTRAS;
+    if (torres->resistencia_torre_1 == INDEFINIDO) torres->resistencia_torre_1 = MAXIMO_RESISTENCIA;
+    if (torres->resistencia_torre_2 == INDEFINIDO) torres->resistencia_torre_2 = MAXIMO_RESISTENCIA;
+    if (torres->enanos_extra == INDEFINIDO) torres->enanos_extra = ENANOS_EXTRAS;
+    if (torres->elfos_extra == INDEFINIDO) torres->elfos_extra = ELFOS_EXTRAS;
 }
 
 
@@ -93,12 +91,12 @@ int fallo_segun_tiempo(int tiempo) {
 //~ Definido en la defendiendo_torres.h
 void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion) {
     *juego = configuracion.juego;
-    inicializar_torres(&((*juego).torres));
-    if (juego->critico_legolas == INDEFINIDO) (*juego).critico_legolas = critico_segun_animo(animo_legolas);
-    if (juego->critico_gimli == INDEFINIDO) (*juego).critico_gimli = critico_segun_animo(animo_gimli);
-    if (juego->fallo_legolas == INDEFINIDO) (*juego).fallo_legolas = fallo_segun_tiempo(viento);
-    if (juego->fallo_gimli == INDEFINIDO) (*juego).fallo_gimli = fallo_segun_tiempo(humedad);
-    (*juego).nivel_actual = PRIMER_NIVEL;
+    inicializar_torres(&(juego->torres));
+    if (juego->critico_legolas == INDEFINIDO) juego->critico_legolas = critico_segun_animo(animo_legolas);
+    if (juego->critico_gimli == INDEFINIDO) juego->critico_gimli = critico_segun_animo(animo_gimli);
+    if (juego->fallo_legolas == INDEFINIDO) juego->fallo_legolas = fallo_segun_tiempo(viento);
+    if (juego->fallo_gimli == INDEFINIDO) juego->fallo_gimli = fallo_segun_tiempo(humedad);
+    juego->nivel_actual = PRIMER_NIVEL;
 }
 
 
@@ -233,12 +231,12 @@ bool es_elfo(char tipo) {
 //~ Pre: Recibe la posicion y el tipo de un nuevo defensor.
 //~ Pos: Inicializa al defensor en su posicion, con su tipo y su fuerza_ataque.
 void inicializar_defensor(defensor_t *defensor, coordenada_t posicion, char tipo){
-    (*defensor).posicion = posicion;
-    (*defensor).tipo = tipo;
+    defensor->posicion = posicion;
+    defensor->tipo = tipo;
     if (es_elfo(tipo))
-        (*defensor).fuerza_ataque = ATAQUE_ELFOS;
+        defensor->fuerza_ataque = ATAQUE_ELFOS;
     else
-        (*defensor).fuerza_ataque = ATAQUE_ENANOS;
+        defensor->fuerza_ataque = ATAQUE_ENANOS;
 }
 
 
@@ -250,8 +248,8 @@ int agregar_defensor(nivel_t* nivel, coordenada_t posicion, char tipo) {
     obtener_posiciones(*nivel, posiciones, tope_posiciones);
 
     if (posicion_disponible(posiciones, tope_posiciones, posicion)) {
-        inicializar_defensor(&((*nivel).defensores[(*nivel).tope_defensores]), posicion, tipo);
-        (*nivel).tope_defensores++;
+        inicializar_defensor(&(nivel->defensores[nivel->tope_defensores]), posicion, tipo);
+        nivel->tope_defensores++;
         return AGREGADO;
     }
     return NO_AGREGADO;
@@ -262,9 +260,9 @@ int agregar_defensor(nivel_t* nivel, coordenada_t posicion, char tipo) {
 //~ Pre: Recibe el número de camino donde se va a agregar al enemigo.
 //~ Pos: Inicializa a un enemigo en uno de los camino, en la POSICION_INICIAL, con VIDA_INICIAL y un extra al azar.
 void inicializar_enemigo(enemigo_t *enemigo, int num_camino) {
-    (*enemigo).camino = num_camino;
-    (*enemigo).pos_en_camino = POSICION_INICIAL;
-    (*enemigo).vida = VIDA_INICIAL + (rand() % VIDA_EXTRA + 1);
+    enemigo->camino = num_camino;
+    enemigo->pos_en_camino = POSICION_INICIAL;
+    enemigo->vida = VIDA_INICIAL + (rand() % VIDA_EXTRA + 1);
 }
 
 
@@ -272,13 +270,13 @@ void inicializar_enemigo(enemigo_t *enemigo, int num_camino) {
 //~ Pre: Se recibe una instancia de nivel.
 //~ Pos: Se agrega un enemigo en los caminos que disponga el nivel.
 void agregar_enemigo(nivel_t* nivel) {
-    if ((*nivel).tope_camino_1) {
-        inicializar_enemigo((&(*nivel).enemigos[(*nivel).tope_enemigos]), CAMINO_UNO);
-        (*nivel).tope_enemigos++;
+    if (nivel->tope_camino_1) {
+        inicializar_enemigo((&nivel->enemigos[nivel->tope_enemigos]), CAMINO_UNO);
+        nivel->tope_enemigos++;
     }
-    if ((*nivel).tope_camino_2) {
-        inicializar_enemigo((&(*nivel).enemigos[(*nivel).tope_enemigos]), CAMINO_DOS);
-        (*nivel).tope_enemigos++;
+    if (nivel->tope_camino_2) {
+        inicializar_enemigo((&nivel->enemigos[nivel->tope_enemigos]), CAMINO_DOS);
+        nivel->tope_enemigos++;
     }
 }
 
@@ -377,9 +375,9 @@ void ataca_orco(juego_t *juego, int def, int enem) {
     acierto = porcentaje_aleatorio();
     critico = porcentaje_aleatorio();
     if (logra_atacar(*juego, def, acierto)) {
-        (*juego).nivel.enemigos[enem].vida -= (*juego).nivel.defensores[def].fuerza_ataque;
+        juego->nivel.enemigos[enem].vida -= juego->nivel.defensores[def].fuerza_ataque;
         if (logra_ataque_critico(*juego, def, critico))
-            (*juego).nivel.enemigos[enem].vida -= ADICIONAL_CRITICO;
+            juego->nivel.enemigos[enem].vida -= ADICIONAL_CRITICO;
     }
 }
 
@@ -390,10 +388,10 @@ void ataca_orco(juego_t *juego, int def, int enem) {
 void elfo_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino, int def) {
     int i = 0, enem;
     while (i < tope_camino) {
-        if (en_alcance_de_flecha((*juego).nivel.defensores[def], camino[i])) {
+        if (en_alcance_de_flecha(juego->nivel.defensores[def], camino[i])) {
             enem = 0;
-            while (enem < (*juego).nivel.tope_enemigos) {
-                if (orco_vivo_en_camino((*juego).nivel.enemigos[enem], num_camino, i))
+            while (enem < juego->nivel.tope_enemigos) {
+                if (orco_vivo_en_camino(juego->nivel.enemigos[enem], num_camino, i))
                     ataca_orco(juego, def, enem);
                 enem++;
             }
@@ -409,10 +407,10 @@ void elfo_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO],
 void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO], int tope_camino, int num_camino, int def, int *ha_atacado) {
     int i = 0, enem;
     while (i < tope_camino && !(*ha_atacado)) {
-        if (en_alcance_de_hacha((*juego).nivel.defensores[def], camino[i])) {
+        if (en_alcance_de_hacha(juego->nivel.defensores[def], camino[i])) {
             enem = 0;
-            while (enem < (*juego).nivel.tope_enemigos && !(*ha_atacado)) {
-                if (orco_vivo_en_camino((*juego).nivel.enemigos[enem], num_camino, i)) {
+            while (enem < juego->nivel.tope_enemigos && !(*ha_atacado)) {
+                if (orco_vivo_en_camino(juego->nivel.enemigos[enem], num_camino, i)) {
                     ataca_orco(juego, def, enem);
                     *ha_atacado = ATACO;
                 }
@@ -428,8 +426,8 @@ void enano_ataca_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO]
 //~ Pre: Recibe la instancia de un juego y a uno de los elfos defensores.
 //~ Pos: El elfo buscará enemigos en CAMINO_UNO y CAMINO_DOS. Atacará a todos los que estén a su alcance.
 void ataca_elfo(juego_t *juego, int def) {
-    elfo_ataca_camino(juego, (*juego).nivel.camino_1,(*juego).nivel.tope_camino_1, CAMINO_UNO, def);
-    elfo_ataca_camino(juego, (*juego).nivel.camino_2,(*juego).nivel.tope_camino_2, CAMINO_DOS, def);
+    elfo_ataca_camino(juego, juego->nivel.camino_1,juego->nivel.tope_camino_1, CAMINO_UNO, def);
+    elfo_ataca_camino(juego, juego->nivel.camino_2,juego->nivel.tope_camino_2, CAMINO_DOS, def);
 }
 
 
@@ -438,8 +436,8 @@ void ataca_elfo(juego_t *juego, int def) {
 //~ Pos: El enano buscará enemigos en CAMINO_UNO y CAMINO_DOS. Sólo atacará al primero que encuentre a su alrededor.
 void ataca_enano(juego_t *juego, int def) {
     int ataco = NO_ATACO;
-    enano_ataca_camino(juego, (*juego).nivel.camino_1,(*juego).nivel.tope_camino_1, CAMINO_UNO, def, &ataco);
-    enano_ataca_camino(juego, (*juego).nivel.camino_2,(*juego).nivel.tope_camino_2, CAMINO_DOS, def, &ataco);
+    enano_ataca_camino(juego, juego->nivel.camino_1,juego->nivel.tope_camino_1, CAMINO_UNO, def, &ataco);
+    enano_ataca_camino(juego, juego->nivel.camino_2,juego->nivel.tope_camino_2, CAMINO_DOS, def, &ataco);
 }
 
 
@@ -447,9 +445,9 @@ void ataca_enano(juego_t *juego, int def) {
 //~ Pre: Recibe la instancia de juego y la posicion de un defensor en el vector defensores.
 //~ Pos: Primero atacaran elfos y después enanos.
 void atacan_defensores(juego_t *juego, int def) {
-    if (def >= (*juego).nivel.tope_defensores) {
+    if (def >= juego->nivel.tope_defensores) {
         return;
-    } else if (es_elfo((*juego).nivel.defensores[def].tipo)) {
+    } else if (es_elfo(juego->nivel.defensores[def].tipo)) {
         ataca_elfo(juego, def);
         atacan_defensores(juego, def+1);
     } else {
@@ -474,11 +472,11 @@ bool orco_llega_a_torre(enemigo_t enemigo, nivel_t nivel){
 //~ Pre: Recibe un enemigo en una torre.
 //~ Pos: La ataca con toda su vida y muere.
 void ataca_enemigo(enemigo_t *enemigo, torres_t *torres) {
-    if ((*enemigo).camino == CAMINO_UNO)
-        (*torres).resistencia_torre_1 -= (*enemigo).vida;
+    if (enemigo->camino == CAMINO_UNO)
+        torres->resistencia_torre_1 -= enemigo->vida;
     else
-        (*torres).resistencia_torre_2 -= (*enemigo).vida;
-    (*enemigo).vida = SIN_VIDA;
+        torres->resistencia_torre_2 -= enemigo->vida;
+    enemigo->vida = SIN_VIDA;
 }
 
 
@@ -486,11 +484,11 @@ void ataca_enemigo(enemigo_t *enemigo, torres_t *torres) {
 //~ Todos los enemigos con vida avanzan 1 posición y si llega uno a la torre, la ataca.
 void avanzan_enemigos(juego_t *juego) {
     int i;
-    for (i = 0; i < (*juego).nivel.tope_enemigos; i++) {
-        if (orco_vivo((*juego).nivel.enemigos[i])){
-            (*juego).nivel.enemigos[i].pos_en_camino++;
-            if (orco_llega_a_torre((*juego).nivel.enemigos[i], (*juego).nivel))
-                ataca_enemigo(&((*juego).nivel.enemigos[i]), &(*juego).torres);
+    for (i = 0; i < juego->nivel.tope_enemigos; i++) {
+        if (orco_vivo(juego->nivel.enemigos[i])){
+            juego->nivel.enemigos[i].pos_en_camino++;
+            if (orco_llega_a_torre(juego->nivel.enemigos[i], juego->nivel))
+                ataca_enemigo(&(juego->nivel.enemigos[i]), &juego->torres);
         }
     }
 }
@@ -501,8 +499,8 @@ void avanzan_enemigos(juego_t *juego) {
 void jugar_turno(juego_t* juego) {
     atacan_defensores(juego, 0);
     avanzan_enemigos(juego);
-    if ((*juego).nivel.tope_enemigos < (*juego).nivel.max_enemigos_nivel)
-        agregar_enemigo(&((*juego).nivel));
+    if (juego->nivel.tope_enemigos < juego->nivel.max_enemigos_nivel)
+        agregar_enemigo(&(juego->nivel));
 }
 
 

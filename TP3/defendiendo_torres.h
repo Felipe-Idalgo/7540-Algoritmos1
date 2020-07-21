@@ -11,7 +11,7 @@
 #define MAX_DEFENSORES 50
 #define MAX_NIVELES 4
 #define MAX_ARCHIVO 100
-#define MAX_NOMBRE 100
+#define INDEFINIDO -1
 
 typedef struct coordenada {
 	int fil;
@@ -40,7 +40,7 @@ typedef struct enemigo {
 typedef struct nivel {
 	coordenada_t camino_1[MAX_LONGITUD_CAMINO];
 	int tope_camino_1;
-	
+
 	coordenada_t camino_2[MAX_LONGITUD_CAMINO];
 	int tope_camino_2;
 
@@ -63,11 +63,6 @@ typedef struct juego {
 	int fallo_gimli;
 } juego_t;
 
-typedef struct rank {
-    char nombre[MAX_NOMBRE];
-    int puntaje;
-} rank_t;
-
 typedef struct configuracion {
     juego_t juego;
     int max_niveles;
@@ -89,7 +84,7 @@ typedef struct configuracion {
 void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion);
 
 /*
- * Recibe un juego con todas sus estructuras válidas. 
+ * Recibe un juego con todas sus estructuras válidas.
  * El juego se dará por ganado si el juego está en el ultimo nivel y éste ha sido terminado.
  * El juego se dará por perdido, si alguna de las torres llega a 0 en su resistencia.
  * Devolverá:
@@ -100,8 +95,8 @@ void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legol
 int estado_juego(juego_t juego);
 
 /*
- * Recibe un nivel con todas sus estructuras válidas. 
- * El nivel se dará por ganado cuando estén TODOS los orcos de ese 
+ * Recibe un nivel con todas sus estructuras válidas.
+ * El nivel se dará por ganado cuando estén TODOS los orcos de ese
  * nivel muertos (esto es, con vida menor o igual a 0).
  * Devolverá:
  * >  0 si el estado es jugando.
@@ -109,11 +104,11 @@ int estado_juego(juego_t juego);
  */
 int estado_nivel(nivel_t nivel);
 
-/* 
+/*
  * Agregará un defensor en el nivel recibido como parametro.
  * Devolverá:
  * >  0 si pudo agregar el defensor correctamente.
- * > -1 si no pudo (la coordenada es parte del camino de ese nivel, 
+ * > -1 si no pudo (la coordenada es parte del camino de ese nivel,
  * existe otro defensor, etc.)
  */
 int agregar_defensor(nivel_t* nivel, coordenada_t posicion, char tipo);
@@ -124,7 +119,7 @@ int agregar_defensor(nivel_t* nivel, coordenada_t posicion, char tipo);
  */
 void jugar_turno(juego_t* juego);
 
-/* 
+/*
  * Mostrará el mapa dependiendo del nivel en que se encuentra el jugador.
  */
 void mostrar_juego(juego_t juego);

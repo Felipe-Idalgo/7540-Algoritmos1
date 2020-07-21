@@ -8,6 +8,7 @@
 #include "defendiendo_torres.h"
 #include "animos.h"
 #include "utiles.h"
+#include "juego.h"
 
 #define ENANOS 'G'
 #define ELFOS 'L'
@@ -22,39 +23,41 @@
 #define AGREGADO 0
 
 const char IGNORAR = 'X';
-const float DELAY = 0.5;
+const float DELAY = 0.5f;
+const float DELAY_REPRODUCCION = 1.0f;
 
-const int MINIMO_MATRIZ = 0;
-const int MAXIMO_MATRIZ_MENOR = 14;
-const int MAXIMO_MATRIZ_MAYOR = 19;
-const int AL_ESTE = 14;
-const int AL_OESTE = 5;
+const int MINIMO_MATRIZ = 0, MAXIMO_MATRIZ_MENOR = 14, MAXIMO_MATRIZ_MAYOR = 19;
+const int AL_ESTE = 14, AL_OESTE = 5;
 
-const int ENANOS_INICIALES_PRIMER_NIVEL = 5;
-const int ELFOS_INICIALES_PRIMER_NIVEL = 0;
-const int ENANOS_INICIALES_SEGUND_NIVEL = 0;
-const int ELFOS_INICIALES_SEGUND_NIVEL = 5;
-const int ENANOS_INICIALES_TERCER_NIVEL = 3;
-const int ELFOS_INICIALES_TERCER_NIVEL = 3;
-const int ENANOS_INICIALES_CUARTO_NIVEL = 4;
-const int ELFOS_INICIALES_CUARTO_NIVEL = 4;
-const int COSTE_EXTRA = 50;
-const int ORCOS_PARA_AGREGAR_ENANO = 25;
-const int ORCOS_PARA_AGREGAR_DEFENSOR = 50;
+const int ENANOS_INICIALES_PRIMER_NIVEL = 5,
+          ELFOS_INICIALES_PRIMER_NIVEL = 0,
+          ENANOS_INICIALES_SEGUND_NIVEL = 0,
+          ELFOS_INICIALES_SEGUND_NIVEL = 5,
+          ENANOS_INICIALES_TERCER_NIVEL = 3,
+          ELFOS_INICIALES_TERCER_NIVEL = 3,
+          ENANOS_INICIALES_CUARTO_NIVEL = 4,
+          ELFOS_INICIALES_CUARTO_NIVEL = 4,
+          COSTE_ENANOS_TORRE_1 = 50,
+          COSTE_ENANOS_TORRE_2 = 0,
+          COSTE_ELFOS_TORRE_1 = 0,
+          COSTE_ELFOS_TORRE_2 = 50,
+          ORCOS_PARA_AGREGAR_ENANO = 25,
+          ORCOS_PARA_AGREGAR_DEFENSOR = 50,
+          TORRE_1 = 1,
+          TORRE_2 = 2;
 
-const int MAX_ENEMIGOS_PRIMER_NIVEL = 100;
-const int MAX_ENEMIGOS_SEGUND_NIVEL = 200;
-const int MAX_ENEMIGOS_TERCER_NIVEL = 300;
-const int MAX_ENEMIGOS_CUARTO_NIVEL = 500;
+const int MAX_ENEMIGOS_PRIMER_NIVEL = 100,
+          MAX_ENEMIGOS_SEGUND_NIVEL = 200,
+          MAX_ENEMIGOS_TERCER_NIVEL = 300,
+          MAX_ENEMIGOS_CUARTO_NIVEL = 500;
 
-const int SIN_CAMINO = 0;
-const int SIN_DEFENSORES = 0;
-const int SIN_ENEMIGOS = 0;
+const int SIN_CAMINO = 0, SIN_DEFENSORES = 0, SIN_ENEMIGOS = 0;
 
 
 
 //~ Detiene el tiempo, limpia la consola y muestra el juego.
 void limpiar_y_mostrar(juego_t juego, float velocidad) {
+    if (velocidad == INDEFINIDO) velocidad = DELAY;
     detener_el_tiempo(velocidad);
     system("clear");
     mostrar_juego(juego);
@@ -76,8 +79,6 @@ void mostrar_ayuda() {
     system("clear");
     printf("\nVamos a jugar!\n");
     printf("\nContamos con enanos (G) y elfos (L) para defender las torres.\n");
-    printf("\nLa torre 1 esta a cuidado de Gimli. Tiene 600 puntos de resistencia y en ella hay 10 enanos extra que te podran ayudar, si lo deseas.\n");
-    printf("\nLa torre 2 esta a cuidado de Legolas. Tiene 600 puntos de resistencia y en ella hay 10 elfos extra que te podran ayudar, si los necesitas.\n");
     printf("\nLos Orcos se dirigen desde una Entrada a una sola de las Torres por un camino.\n");
     printf("\nUn G puede atacar a un enemigo por turno y solo aquellos que lo rodean.\n");
     printf("\nUn L puede atacar a varios enemigos por turno si están a 3 o menos celdas de distancia.\n");
@@ -124,8 +125,8 @@ bool cuarto_nivel(juego_t juego) {
 //~ Pre: Recibe un numero de fila y un numero de columna para una matriz.
 //~ Pos: Inicializa una coordenada.
 void ubicar(coordenada_t *coordenada, int fil, int col){
-    (*coordenada).fil = fil;
-    (*coordenada).col = col;
+    coordenada->fil = fil;
+    coordenada->col = col;
 }
 
 
@@ -184,7 +185,7 @@ void obtener_camino_1(juego_t *juego, char camino[MAX_ARCHIVO]) {
         ubicar(&torre_1, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
 
     } else if (segundo_nivel(*juego)) {
-        (*juego).nivel.tope_camino_1 = SIN_CAMINO;
+        juego->nivel.tope_camino_1 = SIN_CAMINO;
         return;
 
     } else if (tercer_nivel(*juego)) {
@@ -195,7 +196,7 @@ void obtener_camino_1(juego_t *juego, char camino[MAX_ARCHIVO]) {
         ubicar(&entrada_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
         ubicar(&torre_1, MINIMO_MATRIZ, AL_ESTE);
     }
-    obtener_camino((*juego).nivel.camino_1, &((*juego).nivel.tope_camino_1), entrada_1, torre_1);
+    obtener_camino(juego->nivel.camino_1, &(juego->nivel.tope_camino_1), entrada_1, torre_1);
 }
 
 
@@ -206,7 +207,7 @@ void obtener_camino_2(juego_t *juego, char camino[MAX_ARCHIVO]) {
     coordenada_t entrada_2, torre_2;
 
     if (primer_nivel(*juego)) {
-        (*juego).nivel.tope_camino_2 = SIN_CAMINO;
+        juego->nivel.tope_camino_2 = SIN_CAMINO;
         return;
 
     } else if (segundo_nivel(*juego)) {
@@ -221,8 +222,39 @@ void obtener_camino_2(juego_t *juego, char camino[MAX_ARCHIVO]) {
         ubicar(&entrada_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
         ubicar(&torre_2, MINIMO_MATRIZ, AL_OESTE);
     }
-    obtener_camino((*juego).nivel.camino_2, &((*juego).nivel.tope_camino_2), entrada_2, torre_2);
+    obtener_camino(juego->nivel.camino_2, &(juego->nivel.tope_camino_2), entrada_2, torre_2);
 }
+
+
+
+void camino_segun_configuracion() {
+
+}
+
+
+
+int defensores_segun_configuracion(int nivel_actual, char tipo, configuracion_t configuracion) {
+    int defensores;
+    if (tipo == ENANOS) {
+        defensores = configuracion.enanos_inicio[nivel_actual-1];
+        if (defensores == INDEFINIDO) {
+          if (nivel_actual == PRIMER_NIVEL) defensores = ENANOS_INICIALES_PRIMER_NIVEL;
+          else if (nivel_actual == SEGUND_NIVEL) defensores = ENANOS_INICIALES_SEGUND_NIVEL;
+          else if (nivel_actual == TERCER_NIVEL) defensores = ENANOS_INICIALES_TERCER_NIVEL;
+          else defensores = ENANOS_INICIALES_CUARTO_NIVEL;
+        }
+    } else  {
+        defensores = configuracion.elfos_inicio[nivel_actual-1];
+        if (defensores == INDEFINIDO) {
+          if (nivel_actual == PRIMER_NIVEL) defensores = ELFOS_INICIALES_PRIMER_NIVEL;
+          else if (nivel_actual == SEGUND_NIVEL) defensores = ELFOS_INICIALES_SEGUND_NIVEL;
+          else if (nivel_actual == TERCER_NIVEL) defensores = ELFOS_INICIALES_TERCER_NIVEL;
+          else defensores = ELFOS_INICIALES_CUARTO_NIVEL;
+        }
+    }
+    return defensores;
+}
+
 
 
 
@@ -230,16 +262,13 @@ void obtener_camino_2(juego_t *juego, char camino[MAX_ARCHIVO]) {
 //~ Pos: Le permite al usuario elegir dónde ubicar a los defensores hasta cumplir con el número de defensores iniciales.
 void agregar_defensores_iniciales(juego_t *juego, int cantidad, char tipo) {
     int i = SIN_DEFENSORES;
-
+    coordenada_t posicion;
     while (i < cantidad) {
-        coordenada_t posicion;
         limpiar_y_mostrar(*juego, DELAY);
         printf("\nVa a agregar un %c\n", tipo);
-        pedir_coordenada(&posicion, (*juego).nivel_actual);
-        if (agregar_defensor(&((*juego).nivel), posicion, tipo) == AGREGADO)
-            i++;
-        else
-            printf("\nLa posición está ocupada\n");
+        pedir_coordenada(&posicion, juego->nivel_actual);
+        if (agregar_defensor(&(juego->nivel), posicion, tipo) == AGREGADO) i++;
+        else printf("\nLa posición está ocupada\n");
     }
 }
 
@@ -248,11 +277,31 @@ void agregar_defensores_iniciales(juego_t *juego, int cantidad, char tipo) {
 //~ Pre: Recibe un juego en nuevo nivel por inicializar y las indicaciones de defensores iniciales para añadirse.
 //~ Pos: Inicializa todos los defensores iniciales.
 void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) {
-    (*juego).nivel.tope_defensores = SIN_DEFENSORES;
-    int enanos_iniciales = configuracion.enanos_inicio[(*juego).nivel_actual-1];
-    int elfos_iniciales = configuracion.elfos_inicio[(*juego).nivel_actual-1];
+    juego->nivel.tope_defensores = SIN_DEFENSORES;
+    int enanos_iniciales = defensores_segun_configuracion(juego->nivel_actual, ENANOS, configuracion);
+    int elfos_iniciales = defensores_segun_configuracion(juego->nivel_actual, ELFOS, configuracion);
     agregar_defensores_iniciales(juego, enanos_iniciales, ENANOS);
     agregar_defensores_iniciales(juego, elfos_iniciales, ELFOS);
+}
+
+
+
+int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t configuracion){
+    int coste;
+    if (tipo == ENANOS && torre == TORRE_1) {
+        coste = configuracion.coste_enanos_torre_1;
+        if (coste == INDEFINIDO) coste = COSTE_ENANOS_TORRE_1;
+    } else if (tipo == ENANOS && torre == TORRE_2) {
+        coste = configuracion.coste_enanos_torre_2;
+        if (coste == INDEFINIDO) coste = COSTE_ENANOS_TORRE_2;
+    } else if (tipo == ELFOS && torre == TORRE_1) {
+        coste = configuracion.coste_elfos_torre_1;
+        if (coste == INDEFINIDO) coste = COSTE_ELFOS_TORRE_1;
+    } else {
+        coste = configuracion.coste_elfos_torre_2;
+        if (coste == INDEFINIDO) coste = COSTE_ELFOS_TORRE_2;
+    }
+    return coste;
 }
 
 
@@ -261,10 +310,11 @@ void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) 
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un enano al juego.
 bool puede_agregar_enanos(juego_t juego, configuracion_t configuracion) {
+    int costo_torre_1 = costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion);
+    int costo_torre_2 = costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion);
     return (
-        //~ (!segundo_nivel(juego)) &&
-        (juego.torres.resistencia_torre_1 > configuracion.coste_enanos_torre_1)
-        && (juego.torres.resistencia_torre_2 > configuracion.coste_enanos_torre_2)
+        (costo_torre_1 && juego.torres.resistencia_torre_1 > costo_torre_1)
+        && (costo_torre_2 && juego.torres.resistencia_torre_2 > costo_torre_2)
         && (juego.torres.enanos_extra > SIN_DEFENSORES)
     );
 }
@@ -274,10 +324,11 @@ bool puede_agregar_enanos(juego_t juego, configuracion_t configuracion) {
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un elfo al juego.
 bool puede_agregar_elfos(juego_t juego, configuracion_t configuracion) {
+    int costo_torre_1 = costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion);
+    int costo_torre_2 = costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion);
     return (
-        //~ (!primer_nivel(juego)) &&
-        (juego.torres.resistencia_torre_1 > configuracion.coste_elfos_torre_1)
-        && (juego.torres.resistencia_torre_2 > configuracion.coste_elfos_torre_2)
+        (costo_torre_1 && juego.torres.resistencia_torre_1 > costo_torre_1)
+        && (costo_torre_2 && juego.torres.resistencia_torre_2 > costo_torre_2)
         && (juego.torres.elfos_extra > SIN_DEFENSORES)
     );
 }
@@ -335,8 +386,12 @@ void pedir_tipo(juego_t juego, char *tipo, configuracion_t configuracion) {
         printf(" %c (%i)", ELFOS, juego.torres.elfos_extra);
     }
 
-    printf("\nRecuerda que agregar un %c costará %i a la Torre1 y %i a la Torre 2.\n", ENANOS, configuracion.coste_enanos_torre_1, configuracion.coste_enanos_torre_1);
-    printf("\nAgregar un %c costará %i a la Torre1 y %i a la Torre 2. \n", ELFOS, configuracion.coste_elfos_torre_1, configuracion.coste_elfos_torre_2);
+    printf("\nRecuerda que agregar un %c costará %i a la Torre1 y %i a la Torre 2.\n", ENANOS,
+            costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion),
+            costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion));
+    printf("\nAgregar un %c costará %i a la Torre1 y %i a la Torre 2. \n", ELFOS,
+            costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion),
+            costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion));
     printf("\nAgregar ");
     if (hay_enanos_disponibles) printf("%c/", ENANOS);
     if (hay_elfos_disponibles) printf("%c/", ELFOS);
@@ -356,16 +411,16 @@ void pedir_tipo(juego_t juego, char *tipo, configuracion_t configuracion) {
 
 //~ Elimina un enano de la torre_1.
 void descontar_enano(torres_t *torres, configuracion_t configuracion) {
-    (*torres).resistencia_torre_1 -= configuracion.coste_enanos_torre_1;
-    (*torres).resistencia_torre_2 -= configuracion.coste_enanos_torre_2;
-    (*torres).enanos_extra--;
+    torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion);
+    torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion);
+    torres->enanos_extra--;
 }
 
 //~ Elimina un elfo de la torre_2.
 void descontar_elfo(torres_t *torres, configuracion_t configuracion) {
-    (*torres).resistencia_torre_1 -= configuracion.coste_elfos_torre_1;
-    (*torres).resistencia_torre_2 -= configuracion.coste_elfos_torre_2;
-    (*torres).elfos_extra--;
+    torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion);
+    torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion);
+    torres->elfos_extra--;
 }
 
 
@@ -382,14 +437,14 @@ void agregar_defensor_extra(juego_t *juego, configuracion_t configuracion) {
         return;
     }
 
-    pedir_coordenada(&posicion, (*juego).nivel_actual);
-    while (agregar_defensor(&((*juego).nivel), posicion, tipo) != AGREGADO) {
+    pedir_coordenada(&posicion, juego->nivel_actual);
+    while (agregar_defensor(&(juego->nivel), posicion, tipo) != AGREGADO) {
         printf("\nLa posición está ocupada\n");
-        pedir_coordenada(&posicion, (*juego).nivel_actual);
+        pedir_coordenada(&posicion, juego->nivel_actual);
     }
 
-    if (tipo == ENANOS) descontar_enano(&((*juego).torres), configuracion);
-    else descontar_elfo(&((*juego).torres), configuracion);
+    if (tipo == ENANOS) descontar_enano(&(juego->torres), configuracion);
+    else descontar_elfo(&(juego->torres), configuracion);
 }
 
 
@@ -397,32 +452,34 @@ void agregar_defensor_extra(juego_t *juego, configuracion_t configuracion) {
 //~ Pre: Recibe un juego en un nuevo nivel por inicializar.
 //~ Pos: Elimina los enemigos de una instancia anterior y define max_enemigos_nivel de nivel.
 void cargar_enemigos(juego_t *juego){
-    (*juego).nivel.tope_enemigos = SIN_ENEMIGOS;
+    juego->nivel.tope_enemigos = SIN_ENEMIGOS;
 
     if (primer_nivel(*juego))
-        (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_PRIMER_NIVEL;
+        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_PRIMER_NIVEL;
     else if (segundo_nivel(*juego))
-        (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_SEGUND_NIVEL;
+        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_SEGUND_NIVEL;
     else if (tercer_nivel(*juego))
-        (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_TERCER_NIVEL;
+        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_TERCER_NIVEL;
     else
-        (*juego).nivel.max_enemigos_nivel = MAX_ENEMIGOS_CUARTO_NIVEL;
+        juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_CUARTO_NIVEL;
 }
 
 
 
 //~ Selección de mensajes para mostrar al inicio de cada nivel.
-void mostrar_intro_nivel(juego_t juego) {
+void mostrar_intro_nivel(juego_t juego, configuracion_t configuracion) {
+    int defensores = defensores_segun_configuracion(juego.nivel_actual, ENANOS, configuracion);
+    defensores += defensores_segun_configuracion(juego.nivel_actual, ELFOS, configuracion);
     if (primer_nivel(juego)) {
         esperar();
         mostrar_ayuda(juego);
-        printf("\nLos enemigos vienen por el este! \nPlanean atacar la torre 1. \nSe necesitan %i defensores de las tropas de %c para protegerla\n", ENANOS_INICIALES_PRIMER_NIVEL, ENANOS);
+        printf("\nLos enemigos vienen por el este! \nPlanean atacar la torre 1. \nSe necesitan %i defensores para protegerla\n", defensores);
     } else if (segundo_nivel(juego)) {
-        printf("\nVienen más orcos! \nAhora se acercan por el oeste para atacar la torre 2! \nPosicione %i defensores de las tropas de %c para detenerlos\n", ELFOS_INICIALES_SEGUND_NIVEL, ELFOS);
+        printf("\nVienen más orcos! \nAhora se acercan por el oeste para atacar la torre 2! \nPosicione %i defensores para detenerlos\n", defensores);
     } else if (tercer_nivel(juego)) {
-        printf("\nOh no! Los enemigos siguen acercándose, esta vez por el norte. \nPueden atacar las dos torres! Ubique %i defensores de las tropas de %c y %i de %c para protegerlas!\n", ENANOS_INICIALES_TERCER_NIVEL, ENANOS, ELFOS_INICIALES_TERCER_NIVEL, ELFOS);
+        printf("\nOh no! Los enemigos siguen acercándose, esta vez por el norte. \nPueden atacar las dos torres! Ubique %i defensores para protegerlas!\n", defensores);
     } else {
-        printf("\nTodavía hay más?!!! Los enemigos vienen por el sur! \nSe dirigen a ambas torres de nuevo. Ubique %i defensores de las tropas de %c y %i de %c para defenderlas\n", ENANOS_INICIALES_CUARTO_NIVEL, ENANOS, ELFOS_INICIALES_CUARTO_NIVEL, ELFOS);
+        printf("\nTodavía hay más?!!! Los enemigos vienen por el sur! \nSe dirigen a ambas torres de nuevo. Ubique %i defensores para defenderlas\n", defensores);
     }
     esperar();
 }
@@ -432,7 +489,7 @@ void mostrar_intro_nivel(juego_t juego) {
 //~ Pre: Recibe un juego en una nueva instancia.
 //~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos. Introduce el nivel con un mensaje.
 void cargar_nivel(juego_t *juego, configuracion_t configuracion) {
-    mostrar_intro_nivel(*juego);
+    mostrar_intro_nivel(*juego, configuracion);
     obtener_camino_1(juego, configuracion.caminos);
     obtener_camino_2(juego, configuracion.caminos);
     cargar_enemigos(juego);
@@ -456,8 +513,15 @@ void mostrar_mensaje_final(int estado_juego) {
 
         printf("\n\n\nGracias por jugar!!\n");
         printf("\n\nEscrito, producido y guionado por %s ;)\n", AUTOR);
-        printf("\%s.\n", FECHA);
+        printf("\n%s.\n", FECHA);
     }
+}
+
+
+
+void pedir_nombre(char nombre[MAX_NOMBRE]) {
+    printf("Ingrese su nombre: ");
+    scanf("%s", nombre);
 }
 
 
@@ -489,26 +553,17 @@ int recursos_usados (torres_t torres, configuracion_t configuracion) {
     recursos += torres.enanos_extra;
     recursos += torres.elfos_extra;
     for (i = 0; i < configuracion.max_niveles; i++) {
-        recursos += configuracion.enanos_inicio[i];
-        recursos += configuracion.elfos_inicio[i];
+        recursos += defensores_segun_configuracion(i+1, ENANOS, configuracion);
+        recursos += defensores_segun_configuracion(i+1, ELFOS, configuracion);
     }
+    printf("Recursos: %i\n", recursos);
     return recursos;
 }
 
 
 
 void grabar(juego_t juego, FILE* grabacion) {
-    if (grabacion) fwrite(&juego, sizeof(juego_t), 1, grabacion);
-}
-
-
-
-void grabar_rank(juego_t juego, FILE* ranking) {
-    if (ranking) {
-        /*
-         * insersion ordenada
-         */
-    };
+    // if (grabacion != NULL) fwrite(&juego, sizeof(juego_t), 1, grabacion);
 }
 
 
@@ -516,7 +571,8 @@ void grabar_rank(juego_t juego, FILE* ranking) {
 void reproducir(FILE* grabacion, float velocidad) {
     juego_t juego;
     size_t leido = fread(&juego, sizeof(juego_t), 1, grabacion);
-    while (leido) {
+    if (velocidad == INDEFINIDO) velocidad = DELAY_REPRODUCCION;
+    while (leido != EOF) {
         limpiar_y_mostrar(juego, velocidad);
         leido = fread(&juego, sizeof(juego_t), 1, grabacion);
     }
@@ -524,17 +580,17 @@ void reproducir(FILE* grabacion, float velocidad) {
 
 
 
-void iniciar_juego(configuracion_t configuracion, FILE* grabacion, FILE* ranking) {
+void iniciar_juego(configuracion_t configuracion, FILE* grabacion, rank_t *rank) {
     srand((unsigned)time(NULL));
     int recursos, viento, humedad;
     char animo_legolas, animo_gimli;
     juego_t juego;
-    rank_t rank;
 
     animos(&viento, &humedad, &animo_legolas, &animo_gimli);
     inicializar_juego(&juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
     recursos = recursos_usados(juego.torres, configuracion);
     cargar_nivel(&juego, configuracion);
+
     grabar(juego, grabacion);
 
     while (estado_juego(juego) == JUGANDO) {
@@ -553,10 +609,8 @@ void iniciar_juego(configuracion_t configuracion, FILE* grabacion, FILE* ranking
         grabar(juego, grabacion);
     }
 
-    rank.puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
     mostrar_mensaje_final(estado_juego(juego));
-    printf("Lograste %i puntos\n", rank.puntaje);
-    /*
-     * grabar rank
-     */
+    rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
+    printf("\nLograste %i puntos\n", rank->puntaje);
+    pedir_nombre(rank->nombre);
 }

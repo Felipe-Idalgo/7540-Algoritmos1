@@ -18,13 +18,13 @@ const char  LISTAR[] = "listar=", CONFIGURACION[] = "config=",
 
 const char  SIN_ARCHIVO[] = "", SEPARACION[] = "_", CARACTER_FINAL = '\0';
 
-const char  EXTENSION_RANKING[] = ".csv", EXTENSION_CAMINOS[] = ".txt",
+const char  EXTENSION[] = ".", EXTENSION_RANKING[] = ".csv", EXTENSION_CAMINOS[] = ".txt",
             EXTENSION_CONFIGURACION[] = ".txt", EXTENSION_GRABACION[] = ".dat";
 
-const char  CONFIGURACION_TMP[] = "c_tmp.txt",
-            GRABACION_TMP[] = "g_tmp.dat",
-            ARCHIVO_RANKING[] = "ranking",
+const char  ARCHIVO_RANKING[] = "ranking",
+            ARCHIVO_RANKING_AUX[] = "tmp.csv",
             FORMATO_LECTURA_RANKING[] = "%[^;];%i\n",
+            FORMATO_ESCRITURA_RANKING[] = "%s;%i\n",
             FORMATO_IMPRESION_RANKING[] = " %i. %s\t\t\t%i\n",
             FORMATO_ENCABEZADO_RANKING[] = "JUGADOR\t\t\t\tPTOS.\n";
 
@@ -84,6 +84,33 @@ bool ingresa_argumento(int argc) {
 
 
 
+bool ingresa_etiqueta(char archivo[], const char etiqueta[]) {
+  return !strncmp(archivo, etiqueta, strlen(etiqueta));
+}
+
+
+
+//~ Pre: Recibe el nombre de un archivo y la extensión que se espera encontrar.
+//~ Pos: Devuelve true si tiene dicha extensión.
+bool tiene_extension_valida(char archivo[MAX_ARCHIVO], const char extension[]) {
+    bool es_valida = false;
+    char* ext_archivo = strrchr(archivo, (int) *extension);
+    if (ext_archivo != NULL) {
+        if (!strcmp(ext_archivo, extension)) {
+            es_valida = true;
+        }
+    }
+    return es_valida;
+}
+
+
+
+bool ingresa_archivo(char archivo[]) {
+  return strcmp(archivo, SIN_ARCHIVO) != 0;
+}
+
+
+
 //~ Pre: Recibe el argumento que esté en la posición de COMANDO.
 //~ Pos: Devuelve true si el argumento corresponde a RANKING
 bool ingresa_ranking(char comando[]) {
@@ -131,7 +158,7 @@ bool ingresa_listar(int argc, char *argv[], int *cant_a_listar) {
     bool hay_que_listar = false;
     int i = ARGUMENTO;
     while (i < argc && !hay_que_listar) {
-        if (!strncmp(argv[i], LISTAR, strlen(LISTAR))) {
+        if (ingresa_etiqueta(argv[i], LISTAR)) {
             hay_que_listar = true;
             size_t pos_numero = strlen(LISTAR);
             *cant_a_listar = atoi(&(argv[i][pos_numero]));
@@ -151,7 +178,7 @@ bool ingresa_configuracion(int argc, char *argv[], char archivo[MAX_ARCHIVO]) {
     bool hay_configuracion = false;
     int i = ARGUMENTO;
     while (i < argc && !hay_configuracion) {
-        if (!strncmp(argv[i], CONFIGURACION, strlen(CONFIGURACION))) {
+        if (ingresa_etiqueta(argv[i], CONFIGURACION)) {
             hay_configuracion = true;
             size_t pos_configuracion = strlen(CONFIGURACION);
             strcpy(archivo, &(argv[i][pos_configuracion]));
@@ -171,7 +198,7 @@ bool ingresa_grabacion(int argc, char *argv[], char archivo[MAX_ARCHIVO]) {
     bool hay_grabacion = false;
     int i = ARGUMENTO;
     while (i < argc && !hay_grabacion) {
-        if (!strncmp(argv[i], GRABACION, strlen(GRABACION))) {
+        if (ingresa_etiqueta(argv[i], GRABACION)) {
             hay_grabacion = true;
             size_t pos_grabacion = strlen(GRABACION);
             strcpy(archivo, &(argv[i][pos_grabacion]));
@@ -190,7 +217,7 @@ bool ingresa_velocidad(int argc, char *argv[], float *velocidad) {
     bool hay_velocidad = false;
     int i = ARGUMENTO;
     while (i < argc && !hay_velocidad) {
-        if (!strncmp(argv[i], VELOCIDAD, strlen(VELOCIDAD))) {
+        if (ingresa_etiqueta(argv[i], VELOCIDAD)) {
             hay_velocidad = true;
             size_t pos_velocidad = strlen(VELOCIDAD);
             *velocidad = (float) atof(&(argv[i][pos_velocidad]));
@@ -202,17 +229,12 @@ bool ingresa_velocidad(int argc, char *argv[], float *velocidad) {
 
 
 
-//~ Pre: Recibe el nombre de un archivo y la extensión que se espera encontrar.
-//~ Pos: Devuelve true si tiene dicha extensión.
-bool tiene_extension_valida(char archivo[MAX_ARCHIVO], const char extension[]) {
-    bool es_valida = false;
+//~ Pre: Recibe el nombre de un archivo y la extensión esperada.
+//~ Pos: Quita la extensión reemplazando el inicio de la extensión del archivo (suele ser '.') por NULL('\0').
+void quitar_extension(char archivo[MAX_ARCHIVO], const char extension[]) {
     char* ext_archivo = strrchr(archivo, (int) *extension);
-    if (ext_archivo != NULL) {
-        if (!strcmp(ext_archivo, extension)) {
-            es_valida = true;
-        }
-    }
-    return es_valida;
+    if (ext_archivo != NULL)
+        *ext_archivo = CARACTER_FINAL;
 }
 
 
@@ -235,10 +257,11 @@ void comprobar_ranking(int argc, char *argv[], char config[MAX_ARCHIVO], int *ca
     }
     if (ingresa_configuracion(argc, argv, config)) {
         if (!tiene_extension_valida(config, EXTENSION_CONFIGURACION)) {
-            printf("El archivo no tiene una extensión válida. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
+            quitar_extension(config, EXTENSION);
+            printf("El archivo no tiene una extensión válida. Tiene que ser %s%s\n", config, EXTENSION_CONFIGURACION);
             *es_valido = false;
         }
-    } else strcpy(config, CONFIGURACION_TMP);
+    } else strcpy(config, SIN_ARCHIVO);
 }
 
 
@@ -257,7 +280,8 @@ void comprobar_crear_caminos(int argc, char *argv[], char archivo[MAX_ARCHIVO], 
     } else {
         strcpy(archivo, argv[ARGUMENTO]);
         if (!tiene_extension_valida(archivo, EXTENSION_CAMINOS)) {
-            printf("La extensión del archivo no es válida. Tiene que ser %s.\n", EXTENSION_CAMINOS);
+            quitar_extension(archivo, EXTENSION);
+            printf("La extensión del archivo no es válida. Tiene que ser %s%s.\n", archivo, EXTENSION_CAMINOS);
             *es_valido = false;
         }
     }
@@ -278,7 +302,8 @@ void comprobar_crear_configuracion(int argc, char *argv[], char archivo[MAX_ARCH
     } else {
         strcpy(archivo, argv[ARGUMENTO]);
         if (!tiene_extension_valida(archivo, EXTENSION_CONFIGURACION)) {
-            printf("La extensión del archivo no es válida. Tiene que ser %s\n", EXTENSION_CONFIGURACION);
+            quitar_extension(archivo, EXTENSION);
+            printf("La extensión del archivo no es válida. Tiene que ser %s%s\n", archivo, EXTENSION_CONFIGURACION);
             *es_valido = false;
         }
     }
@@ -298,7 +323,8 @@ void comprobar_ver_repeticion(int argc, char *argv[], char grabacion[MAX_ARCHIVO
         printf("Tiene que ingresarse un archivo de grabacion%s\n", EXTENSION_GRABACION);
         *es_valido = false;
     }  else if (!tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
-        printf("La grabación no tiene una extensión válida. Tiene que ser %s\n", EXTENSION_GRABACION);
+        quitar_extension(grabacion, EXTENSION);
+        printf("La grabación no tiene una extensión válida. Tiene que ser %s%s\n", grabacion, EXTENSION_GRABACION);
         *es_valido = false;
     } else {
         if (!ingresa_velocidad(argc, argv, velocidad)) {
@@ -321,27 +347,20 @@ void comprobar_jugar_partida(int argc, char *argv[], char config[MAX_ARCHIVO], c
     } else {
         if (ingresa_configuracion(argc, argv, config)) {
             if (!tiene_extension_valida(config, EXTENSION_CONFIGURACION)) {
-                printf("La configuración no está con la extensión adecuada. Tiene que ser %s.\n", EXTENSION_CONFIGURACION);
+                quitar_extension(config, EXTENSION);
+                printf("La configuración no está con la extensión adecuada. Tiene que ser %s%s.\n", config, EXTENSION_CONFIGURACION);
                 *es_valido = false;
             }
-        } else strcpy(config, CONFIGURACION_TMP);
+        } else strcpy(config, SIN_ARCHIVO);;
 
         if (ingresa_grabacion(argc, argv, grabacion)) {
             if (!tiene_extension_valida(grabacion, EXTENSION_GRABACION)) {
-                printf("La grabación no está con la extensión adecuada. Tiene que ser %s\n", EXTENSION_GRABACION);
+                quitar_extension(grabacion, EXTENSION);
+                printf("La grabación no está con la extensión adecuada. Tiene que ser %s%s\n", grabacion, EXTENSION_GRABACION);
                 *es_valido = false;
             };
-        } else strcpy(grabacion, GRABACION_TMP);
+        } else strcpy(grabacion, SIN_ARCHIVO);;
     }
-}
-
-
-
-//~ Pre: Recibe el nombre de un archivo y la extensión esperada.
-//~ Pos: Quita la extensión reemplazando el inicio de la extensión del archivo (suele ser '.') por NULL('\0').
-void quitar_extension(char archivo[MAX_ARCHIVO], const char extension[]) {
-    char* ext_archivo = strrchr(archivo, (int) *extension);
-    *ext_archivo = CARACTER_FINAL;
 }
 
 
@@ -360,12 +379,45 @@ bool se_puede_abrir(FILE* archivo, char nombre[MAX_ARCHIVO]) {
 //~ Pos: Inicializa ranking con el nombre del archivo de una configuración personalizada o predeterminada.
 void obtener_ranking(char ranking[MAX_ARCHIVO], char config[MAX_ARCHIVO]) {
     strcpy(ranking, ARCHIVO_RANKING);
-    if (strcmp(config, CONFIGURACION_TMP)) {
+    if (ingresa_archivo(config)) {
         quitar_extension(config, EXTENSION_CONFIGURACION);
         strcat(ranking, SEPARACION);
         strcat(ranking, config);
     }
     strcat(ranking, EXTENSION_RANKING);
+}
+
+
+
+void grabar_rank_aux(char ranking[], rank_t rank) {
+    int leido;
+    rank_t rank_aux;
+    FILE *archivo, *archivo_aux;
+    archivo = fopen(ranking, LECTURA);
+    if (!se_puede_abrir(archivo, ranking)) return;
+    archivo_aux = fopen(ARCHIVO_RANKING_AUX, ESCRITURA);
+    if (!se_puede_abrir(archivo_aux, (char*) ARCHIVO_RANKING_AUX)) {
+        fclose(archivo);
+        return;
+    }
+    leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
+    while (!leido) {
+        if (rank.puntaje > rank_aux.puntaje) {
+            fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
+            rank = rank_aux;
+        }
+        leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
+    }
+    fclose(archivo_aux);
+    fclose(archivo);
+    rename(ARCHIVO_RANKING_AUX, ranking);
+}
+
+
+
+void grabar_rank(char config[], rank_t rank) {
+    grabar_rank_aux(config, rank);
+    if (ingresa_archivo(config)) grabar_rank((char *) SIN_ARCHIVO, rank);
 }
 
 
@@ -377,6 +429,28 @@ void crear_camino(int nivel_actual) {
      * crear_camino(3)
      * crear_camino(4)
      */
+}
+void inicializar_configuracion(configuracion_t *configuracion) {
+    configuracion->max_niveles = MAX_NIVELES;
+    configuracion->juego.torres.resistencia_torre_1 = INDEFINIDO;
+    configuracion->juego.torres.resistencia_torre_2 = INDEFINIDO;
+    configuracion->juego.torres.enanos_extra = INDEFINIDO;
+    configuracion->juego.torres.elfos_extra = INDEFINIDO;
+    configuracion->juego.torres.elfos_extra = INDEFINIDO;
+    configuracion->juego.critico_gimli = INDEFINIDO;
+    configuracion->juego.critico_legolas = INDEFINIDO;
+    configuracion->juego.fallo_gimli = INDEFINIDO;
+    configuracion->juego.fallo_legolas = INDEFINIDO;
+    for (int i = 0; i < configuracion->max_niveles; i++) {
+        configuracion->enanos_inicio[i] = INDEFINIDO;
+        configuracion->elfos_inicio[i] = INDEFINIDO;
+    }
+    configuracion->coste_enanos_torre_1 = INDEFINIDO;
+    configuracion->coste_enanos_torre_2 = INDEFINIDO;
+    configuracion->coste_elfos_torre_1 = INDEFINIDO;
+    configuracion->coste_elfos_torre_2 = INDEFINIDO;
+    configuracion->velocidad = INDEFINIDO;
+    strcpy(configuracion->caminos, "-1");
 }
 
 
@@ -397,35 +471,51 @@ void crear_configuracion() {
 
 
 
-
-void escribir_configuracion(configuracion_t *configuracion, FILE* archivo) {
-    juego_t juego = (*configuracion).juego;
+void escribir_configuracion(configuracion_t configuracion, FILE* archivo) {
+    juego_t juego = configuracion.juego;
     torres_t torres = juego.torres;
     fprintf(archivo, RESISTENCIA_TORRES, torres.resistencia_torre_1, torres.resistencia_torre_2);
-    fprintf(archivo, ENANOS_INICIO, (*configuracion).enanos_inicio[0], (*configuracion).enanos_inicio[1], (*configuracion).enanos_inicio[2], (*configuracion).enanos_inicio[3]);
-    fprintf(archivo, ELFOS_INICIO, (*configuracion).elfos_inicio[0], (*configuracion).elfos_inicio[1], (*configuracion).elfos_inicio[2], (*configuracion).elfos_inicio[3]);
-    fprintf(archivo, ENANOS_EXTRA, torres.enanos_extra, (*configuracion).coste_enanos_torre_1, (*configuracion).coste_enanos_torre_2);
-    fprintf(archivo, ELFOS_EXTRA, torres.elfos_extra, (*configuracion).coste_elfos_torre_1, (*configuracion).coste_elfos_torre_2);
+    fprintf(archivo, ENANOS_INICIO, configuracion.enanos_inicio[0], configuracion.enanos_inicio[1], configuracion.enanos_inicio[2], configuracion.enanos_inicio[3]);
+    fprintf(archivo, ELFOS_INICIO, configuracion.elfos_inicio[0], configuracion.elfos_inicio[1], configuracion.elfos_inicio[2], configuracion.elfos_inicio[3]);
+    fprintf(archivo, ENANOS_EXTRA, torres.enanos_extra, configuracion.coste_enanos_torre_1, configuracion.coste_enanos_torre_2);
+    fprintf(archivo, ELFOS_EXTRA, torres.elfos_extra, configuracion.coste_elfos_torre_1, configuracion.coste_elfos_torre_2);
     fprintf(archivo, ENANOS_ANIMO, juego.fallo_gimli, juego.critico_gimli);
     fprintf(archivo, ELFOS_ANIMO, juego.fallo_legolas, juego.critico_legolas);
-    fprintf(archivo, VELOCIDAD_CONFIG, (*configuracion).velocidad);
-    fprintf(archivo, CAMINOS, (*configuracion).caminos);
+    fprintf(archivo, VELOCIDAD_CONFIG, configuracion.velocidad);
+    fprintf(archivo, CAMINOS, configuracion.caminos);
 }
 
 
 
 void cargar_configuracion(configuracion_t *configuracion, FILE* archivo) {
-    juego_t juego = (*configuracion).juego;
-    torres_t torres = juego.torres;
-    fscanf(archivo, RESISTENCIA_TORRES, &(torres.resistencia_torre_1), &(torres.resistencia_torre_2));
-    fscanf(archivo, ENANOS_INICIO, &((*configuracion).enanos_inicio[0]), &((*configuracion).enanos_inicio[1]), &((*configuracion).enanos_inicio[2]), &((*configuracion).enanos_inicio[3]));
-    fscanf(archivo, ELFOS_INICIO, &((*configuracion).elfos_inicio[0]), (&(*configuracion).elfos_inicio[1]), &((*configuracion).elfos_inicio[2]), &((*configuracion).elfos_inicio[3]));
-    fscanf(archivo, ENANOS_EXTRA, &(torres.enanos_extra), &((*configuracion).coste_enanos_torre_1), &((*configuracion).coste_enanos_torre_2));
-    fscanf(archivo, ELFOS_EXTRA, &(torres.elfos_extra), &((*configuracion).coste_elfos_torre_1), &((*configuracion).coste_elfos_torre_2));
-    fscanf(archivo, ENANOS_ANIMO, &(juego.fallo_gimli), &(juego.critico_gimli));
-    fscanf(archivo, ELFOS_ANIMO, &(juego.fallo_legolas), &(juego.critico_legolas));
-    fscanf(archivo, VELOCIDAD_CONFIG, &((*configuracion).velocidad));
-    fscanf(archivo, CAMINOS, (*configuracion).caminos);
+    //~ juego_t juego = (*configuracion).juego;
+    //~ torres_t torres = juego.torres;
+    //~ if (!fscanf(archivo, RESISTENCIA_TORRES, &(torres.resistencia_torre_1), &(torres.resistencia_torre_2))) {
+        //~ torres.resistencia_torre_1 = INDEFINIDO;
+        //~ torres.resistencia_torre_2 = INDEFINIDO;
+    //~ }
+    //~ if (!fscanf(archivo, ENANOS_INICIO, &((*configuracion).enanos_inicio[0]), &((*configuracion).enanos_inicio[1]), &((*configuracion).enanos_inicio[2]), &((*configuracion).enanos_inicio[3]))) {
+        //~ configuracion->enanos_inicio[0] = INDEFINIDO;
+        //~ configuracion->enanos_inicio[1] = INDEFINIDO;
+        //~ configuracion->enanos_inicio[2] = INDEFINIDO;
+        //~ configuracion->enanos_inicio[3] = INDEFINIDO;
+    //~ };
+    //~ if (!fscanf(archivo, ELFOS_INICIO, &((*configuracion).elfos_inicio[0]), (&(*configuracion).elfos_inicio[1]), &((*configuracion).elfos_inicio[2]), &((*configuracion).elfos_inicio[3]))) {
+        //~ configuracion->elfos_inicio[0] = INDEFINIDO;
+        //~ configuracion->elfos_inicio[1] = INDEFINIDO;
+        //~ configuracion->elfos_inicio[2] = INDEFINIDO;
+        //~ configuracion->elfos_inicio[3] = INDEFINIDO;
+    //~ }
+    //~ if (!fscanf(archivo, ENANOS_EXTRA, &(torres.enanos_extra), &((*configuracion).coste_enanos_torre_1), &((*configuracion).coste_enanos_torre_2))) {
+        //~ torres.enanos_extra = INDEFINIDO;
+        //~ configuracion->coste_enanos_torre_1 = INDEFINIDO;
+        //~ configuracion->coste_enanos_torre_2 = INDEFINIDO;
+    //~ }
+    //~ fscanf(archivo, ELFOS_EXTRA, &(torres.elfos_extra), &((*configuracion).coste_elfos_torre_1), &((*configuracion).coste_elfos_torre_2));
+    //~ fscanf(archivo, ENANOS_ANIMO, &(juego.fallo_gimli), &(juego.critico_gimli));
+    //~ fscanf(archivo, ELFOS_ANIMO, &(juego.fallo_legolas), &(juego.critico_legolas));
+    //~ fscanf(archivo, VELOCIDAD_CONFIG, &((*configuracion).velocidad));
+    //~ fscanf(archivo, CAMINOS, (*configuracion).caminos);
 }
 
 
@@ -433,13 +523,16 @@ void cargar_configuracion(configuracion_t *configuracion, FILE* archivo) {
 void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
     int i = 1, leido;
     char ranking[MAX_ARCHIVO];
+    rank_t rank;
     obtener_ranking(ranking, config);
     FILE* archivo = fopen(ranking, LECTURA);
-    if (!se_puede_abrir(archivo, ranking)) return;
-    rank_t rank;
+    if (!se_puede_abrir(archivo, ranking)) {
+        printf("Tal vez tengas que jugar unas veces para generar un ranking.\n");
+        return;
+    }
     leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
     printf(FORMATO_ENCABEZADO_RANKING);
-    while ((leido != EOF) && (i < cant_a_listar)) {
+    while ((leido != EOF) && (i < cant_a_listar || cant_a_listar == INDEFINIDO)) {
         printf(FORMATO_IMPRESION_RANKING, i, rank.nombre, rank.puntaje);
         leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
         i++;
@@ -455,6 +548,7 @@ void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
     if (!se_puede_abrir(archivo, caminos)) return;
     /*
      * crear caminos
+     * escribir_caminos
      */
     fclose(archivo);
 }
@@ -465,10 +559,10 @@ void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
 void ejecutar_crear_configuracion(char config[MAX_ARCHIVO]) {
     FILE* archivo = fopen(config, ESCRITURA);
     if (!se_puede_abrir(archivo, config)) return;
-    /*
-     * crear configuracion
-     * escribir configuracion
-     */
+    configuracion_t configuracion;
+    inicializar_configuracion(&configuracion);
+    crear_configuracion(&configuracion);
+    escribir_configuracion(configuracion, archivo);
     fclose(archivo);
 }
 
@@ -478,9 +572,7 @@ void ejecutar_crear_configuracion(char config[MAX_ARCHIVO]) {
 void ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
     FILE* archivo = fopen(grabacion, LECTURA);
     if (!se_puede_abrir(archivo, grabacion)) return;
-    /*
-     * ver repeticion
-     */
+    reproducir(archivo, velocidad);
     fclose(archivo);
 }
 
@@ -488,37 +580,33 @@ void ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
 
 
 void ejecutar_jugar_partida(char config[MAX_ARCHIVO], char grabacion[MAX_ARCHIVO]) {
+    FILE *archivo_config, *archivo_grabacion;
     configuracion_t configuracion;
-    char ranking[MAX_ARCHIVO];
-    FILE *archivo_config, *archivo_ranking, *archivo_grabacion;
+    rank_t rank;
 
-    archivo_config = fopen(config, LECTURA);
-    if (se_puede_abrir(archivo_config, config)) {
+    inicializar_configuracion(&configuracion);
+    if (ingresa_archivo(config)) {
+        archivo_config = fopen(config, LECTURA);
+        if (!se_puede_abrir(archivo_config, config)) {
+            printf("Probá con otra configuración.\n");
+            return;
+        }
         cargar_configuracion(&configuracion, archivo_config);
         fclose(archivo_config);
     }
 
-    obtener_ranking(ranking, config);
-    archivo_ranking = fopen(ranking, LECTURA);
-    if (!se_puede_abrir(archivo_ranking, ranking)) {
-        FILE* tmp_ranking = fopen(ranking, ESCRITURA);
-        if (!se_puede_abrir(tmp_ranking, ranking)){
-            return;
+    if (ingresa_archivo(grabacion)) {
+        archivo_grabacion = fopen(grabacion, ESCRITURA);
+        if (!se_puede_abrir(archivo_grabacion, grabacion)) {
+          printf("Ocurrió un problema y no se puede grabar el juego.\n");
+          return;
         }
-        fclose(tmp_ranking);
-        archivo_ranking = fopen(ranking, LECTURA);
     }
+    iniciar_juego(configuracion, archivo_grabacion, &rank);
+    if (archivo_grabacion != NULL) fclose(archivo_grabacion);
 
-    archivo_grabacion = fopen(grabacion, ESCRITURA);
-    iniciar_juego(configuracion, archivo_grabacion, archivo_ranking);
-    if (se_puede_abrir(archivo_grabacion, grabacion)) {
-        fclose(archivo_grabacion);
-        if (strcmp(grabacion, GRABACION_TMP)) {
-            remove(grabacion);
-        }
-    }
-    fclose(archivo_ranking);
-    ejecutar_ranking(100, config);
+    grabar_rank(config, rank);
+    ejecutar_ranking(INDEFINIDO, config);
 }
 
 
@@ -559,4 +647,3 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
- 

@@ -37,14 +37,14 @@ const int ENANOS_INICIALES_PRIMER_NIVEL = 5,
           ELFOS_INICIALES_TERCER_NIVEL = 3,
           ENANOS_INICIALES_CUARTO_NIVEL = 3,
           ELFOS_INICIALES_CUARTO_NIVEL = 3,
-          COSTO_ENANOS_TORRE_1 = 50,
-          COSTO_ENANOS_TORRE_2 = 0,
-          COSTO_ELFOS_TORRE_1 = 0,
-          COSTO_ELFOS_TORRE_2 = 50,
+          COSTO_ENANOS_TORRE_UNO = 50,
+          COSTO_ENANOS_TORRE_DOS = 0,
+          COSTO_ELFOS_TORRE_UNO = 0,
+          COSTO_ELFOS_TORRE_DOS = 50,
           COSTO_INVALIDO = 0,
           ORCOS_PARA_AGREGAR_DEFENSOR = 50,
           ORCOS_PARA_AGREGAR_PRIMERO = 25,
-          TORRE_1 = 1, TORRE_2 = 2;
+          TORRE_UNO = 1, TORRE_DOS = 2;
 
 const int MAX_ENEMIGOS_PRIMER_NIVEL = 100, MAX_ENEMIGOS_SEGUND_NIVEL = 200,
           MAX_ENEMIGOS_TERCER_NIVEL = 300, MAX_ENEMIGOS_CUARTO_NIVEL = 500;
@@ -279,18 +279,18 @@ void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) 
 
 int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t configuracion){
     int costo;
-    if (tipo == ENANOS && torre == TORRE_1) {
+    if (tipo == ENANOS && torre == TORRE_UNO) {
         costo = configuracion.costo_enanos_torre_1;
-        if (costo == INDEFINIDO) costo = COSTO_ENANOS_TORRE_1;
-    } else if (tipo == ENANOS && torre == TORRE_2) {
+        if (costo == INDEFINIDO) costo = COSTO_ENANOS_TORRE_UNO;
+    } else if (tipo == ENANOS && torre == TORRE_DOS) {
         costo = configuracion.costo_enanos_torre_2;
-        if (costo == INDEFINIDO) costo = COSTO_ENANOS_TORRE_2;
-    } else if (tipo == ELFOS && torre == TORRE_1) {
+        if (costo == INDEFINIDO) costo = COSTO_ENANOS_TORRE_DOS;
+    } else if (tipo == ELFOS && torre == TORRE_UNO) {
         costo = configuracion.costo_elfos_torre_1;
-        if (costo == INDEFINIDO) costo = COSTO_ELFOS_TORRE_1;
+        if (costo == INDEFINIDO) costo = COSTO_ELFOS_TORRE_UNO;
     } else {
         costo = configuracion.costo_elfos_torre_2;
-        if (costo == INDEFINIDO) costo = COSTO_ELFOS_TORRE_2;
+        if (costo == INDEFINIDO) costo = COSTO_ELFOS_TORRE_DOS;
     }
     return costo;
 }
@@ -300,8 +300,8 @@ int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t con
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un enano al juego.
 bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
-    int costo_torre_1 = costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion);
-    int costo_torre_2 = costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion);
+    int costo_torre_1 = costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion);
+    int costo_torre_2 = costo_defensor_segun_configuracion(ENANOS, TORRE_DOS, configuracion);
     return (
         (costo_torre_1 > COSTO_INVALIDO || costo_torre_2 > COSTO_INVALIDO)
         && (torres.resistencia_torre_1 > costo_torre_1)
@@ -315,8 +315,8 @@ bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un elfo al juego.
 bool puede_agregar_elfos(torres_t torres, configuracion_t configuracion) {
-    int costo_torre_1 = costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion);
-    int costo_torre_2 = costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion);
+    int costo_torre_1 = costo_defensor_segun_configuracion(ELFOS, TORRE_UNO, configuracion);
+    int costo_torre_2 = costo_defensor_segun_configuracion(ELFOS, TORRE_DOS, configuracion);
     return (
         (costo_torre_1 > COSTO_INVALIDO || costo_torre_2 > COSTO_INVALIDO)
         && (torres.resistencia_torre_1 > costo_torre_1)
@@ -379,11 +379,11 @@ void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
     }
 
     printf("\nRecuerda que agregar un %c costará %i a la Torre1 y %i a la Torre 2.\n", ENANOS,
-            costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion),
-            costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion));
+            costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion),
+            costo_defensor_segun_configuracion(ENANOS, TORRE_DOS, configuracion));
     printf("\nAgregar un %c costará %i a la Torre1 y %i a la Torre 2. \n", ELFOS,
-            costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion),
-            costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion));
+            costo_defensor_segun_configuracion(ELFOS, TORRE_UNO, configuracion),
+            costo_defensor_segun_configuracion(ELFOS, TORRE_DOS, configuracion));
     printf("\nAgregar ");
     if (hay_enanos_disponibles) printf("%c/", ENANOS);
     if (hay_elfos_disponibles) printf("%c/", ELFOS);
@@ -403,15 +403,15 @@ void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
 
 //~ Elimina un enano de la torre_1.
 void descontar_enano(torres_t *torres, configuracion_t configuracion) {
-    torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ENANOS, TORRE_1, configuracion);
-    torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ENANOS, TORRE_2, configuracion);
+    torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion);
+    torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ENANOS, TORRE_DOS, configuracion);
     torres->enanos_extra--;
 }
 
 //~ Elimina un elfo de la torre_2.
 void descontar_elfo(torres_t *torres, configuracion_t configuracion) {
-    torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ELFOS, TORRE_2, configuracion);
-    torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ELFOS, TORRE_1, configuracion);
+    torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ELFOS, TORRE_DOS, configuracion);
+    torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ELFOS, TORRE_UNO, configuracion);
     torres->elfos_extra--;
 }
 

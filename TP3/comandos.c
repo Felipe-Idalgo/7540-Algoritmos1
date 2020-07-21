@@ -4,6 +4,7 @@
 #include <string.h>
 #include "defendiendo_torres.h"
 #include "juego.h"
+#include "configuracion.h"
 
 
 
@@ -34,16 +35,6 @@ const int   LIMITE_ARGUMENTOS_RANKING = 4, LIMITE_ARGUMENTOS_CREAR_CAMINOS = 3,
             LIMITE_ARGUMENTOS_JUGAR_PARTIDA = 4;
 
 const char  LECTURA[] = "r", ESCRITURA[] = "w";
-
-const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
-            ENANOS_INICIO[] = "ENANOS_INICIO=%i,%i,%i,%i\n",
-            ELFOS_INICIO[] = "ELFOS_INICIO=%i,%i,%i,%i\n",
-            ENANOS_EXTRA[] = "ENANOS_EXTRA=%i,%i,%i\n",
-            ELFOS_EXTRA[] = "ELFOS_EXTRA=%i,%i,%i\n",
-            ENANOS_ANIMO[] = "ENANOS_ANIMO=%i,%i\n",
-            ELFOS_ANIMO[] = "ELFOS_ANIMO=%i,%i\n",
-            VELOCIDAD_CONFIG[] = "VELOCIDAD=%f\n",
-            CAMINOS[] = "CAMINOS=%s\n";
 
 
 
@@ -437,62 +428,6 @@ void crear_camino(int nivel_actual) {
 
 
 
-void inicializar_configuracion(configuracion_t *configuracion) {
-    configuracion->max_niveles = MAX_NIVELES;
-    configuracion->juego.torres.resistencia_torre_1 = INDEFINIDO;
-    configuracion->juego.torres.resistencia_torre_2 = INDEFINIDO;
-    configuracion->juego.torres.enanos_extra = INDEFINIDO;
-    configuracion->juego.torres.elfos_extra = INDEFINIDO;
-    configuracion->juego.torres.elfos_extra = INDEFINIDO;
-    configuracion->juego.critico_gimli = INDEFINIDO;
-    configuracion->juego.critico_legolas = INDEFINIDO;
-    configuracion->juego.fallo_gimli = INDEFINIDO;
-    configuracion->juego.fallo_legolas = INDEFINIDO;
-    for (int i = 0; i < configuracion->max_niveles; i++) {
-        configuracion->enanos_inicio[i] = INDEFINIDO;
-        configuracion->elfos_inicio[i] = INDEFINIDO;
-    }
-    configuracion->costo_enanos_torre_1 = INDEFINIDO;
-    configuracion->costo_enanos_torre_2 = INDEFINIDO;
-    configuracion->costo_elfos_torre_1 = INDEFINIDO;
-    configuracion->costo_elfos_torre_2 = INDEFINIDO;
-    configuracion->velocidad = INDEFINIDO;
-    strcpy(configuracion->caminos, "-1");
-}
-
-
-
-void crear_configuracion() {
-    /*
-     * preguntar_resistencia_torres();
-     * preguntar enanos por nivel
-     * preguntar elfos por nivel
-     * preguntar enanos extra, coste a las torres
-     * preguntar elfos extra coste a las torres
-     * preguntar fallo y critico enanos
-     * preguntar fallo y critico elfos
-     * preguntar velocidad
-     * preguntar caminos
-     */
-}
-
-
-
-void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]) {
-    FILE* archivo;
-    inicializar_configuracion(configuracion);
-    if (ingresa_archivo(config)) {
-        archivo = fopen(config, LECTURA);
-        if (!se_puede_abrir(archivo, config)) {
-            printf("Probá con otra configuración.\n");
-            return;
-        }
-        fclose(archivo);
-    }
-}
-
-
-
 void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
     int i = 1, leido;
     char ranking[MAX_ARCHIVO];
@@ -531,26 +466,9 @@ void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
 
 
 void ejecutar_crear_configuracion(char config[MAX_ARCHIVO]) {
-    FILE * archivo;
     configuracion_t configuracion;
-    juego_t juego;
-    torres_t torres;
-    archivo = fopen(config, ESCRITURA);
-    if (!se_puede_abrir(archivo, config)) return;
-    inicializar_configuracion(&configuracion);
     crear_configuracion(&configuracion);
-    juego = configuracion.juego;
-    torres = juego.torres;
-    fprintf(archivo, RESISTENCIA_TORRES, torres.resistencia_torre_1, torres.resistencia_torre_2);
-    fprintf(archivo, ENANOS_INICIO, configuracion.enanos_inicio[0], configuracion.enanos_inicio[1], configuracion.enanos_inicio[2], configuracion.enanos_inicio[3]);
-    fprintf(archivo, ELFOS_INICIO, configuracion.elfos_inicio[0], configuracion.elfos_inicio[1], configuracion.elfos_inicio[2], configuracion.elfos_inicio[3]);
-    fprintf(archivo, ENANOS_EXTRA, torres.enanos_extra, configuracion.costo_enanos_torre_1, configuracion.costo_enanos_torre_2);
-    fprintf(archivo, ELFOS_EXTRA, torres.elfos_extra, configuracion.costo_elfos_torre_1, configuracion.costo_elfos_torre_2);
-    fprintf(archivo, ENANOS_ANIMO, juego.fallo_gimli, juego.critico_gimli);
-    fprintf(archivo, ELFOS_ANIMO, juego.fallo_legolas, juego.critico_legolas);
-    fprintf(archivo, VELOCIDAD_CONFIG, configuracion.velocidad);
-    fprintf(archivo, CAMINOS, configuracion.caminos);
-    fclose(archivo);
+    escribir_configuracion(configuracion, config);
 }
 
 

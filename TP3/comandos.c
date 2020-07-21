@@ -25,8 +25,9 @@ const char  ARCHIVO_RANKING[] = "ranking",
             ARCHIVO_RANKING_AUX[] = "tmp.csv",
             FORMATO_LECTURA_RANKING[] = "%[^;];%i\n",
             FORMATO_ESCRITURA_RANKING[] = "%s;%i\n",
-            FORMATO_ENCABEZADO_RANKING[] = "| º| |PTOS.||JUGADOR\n",
-            FORMATO_IMPRESION_RANKING[] =  "|%i.  %i  - %s\n";
+            FORMATO_ENCABEZADO_RANKING[] = " G A N A D O R E S\n",
+                             SUBRAYADO[] = "~~~~~~~~~~~~~~~~~~~~~~\n",
+            FORMATO_IMPRESION_RANKING[] =  "%i. %s, con %i ptos.\n";
 
 const int   LIMITE_ARGUMENTOS_RANKING = 4, LIMITE_ARGUMENTOS_CREAR_CAMINOS = 3,
             LIMITE_ARGUMENTOS_CREAR_CONFIGURACION = 3, LIMITE_ARGUMENTOS_VER_REPETICION = 4,
@@ -387,41 +388,40 @@ void obtener_ranking(char ranking[MAX_ARCHIVO], char config[MAX_ARCHIVO]) {
 
 
 
-void grabar_rank_aux(char config[MAX_ARCHIVO], rank_t rank) {
-    rank_t rank_aux;
+void grabar_rank(char config[MAX_ARCHIVO], rank_t rank) {
+    FILE *archivo, *archivo_nuevo;
     char ranking[MAX_ARCHIVO];
-    FILE *archivo, *archivo_aux;
+    int leidos;
+    rank_t rank_aux;
     obtener_ranking(ranking, config);
-    archivo_aux = fopen(ARCHIVO_RANKING_AUX, ESCRITURA);
-    if (!se_puede_abrir(archivo_aux, ARCHIVO_RANKING_AUX)) return;
+    archivo_nuevo = fopen(ARCHIVO_RANKING_AUX, ESCRITURA);
+    if (!archivo_nuevo) {
+        printf("No se puede actualizar el ranking\n");
+        return;
+    }
 
     archivo = fopen(ranking, LECTURA);
-    if (se_puede_abrir(archivo, ARCHIVO_RANKING)){
-        fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
-        while (!feof(archivo)) {
+    if (archivo) {
+        leidos = fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
+        while (leidos != EOF) {
             if (rank.puntaje > rank_aux.puntaje) {
-                fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
+                fprintf(archivo_nuevo, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
                 rank = rank_aux;
             } else {
-                fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank_aux.nombre, rank_aux.puntaje);
+                fprintf(archivo_nuevo, FORMATO_ESCRITURA_RANKING, rank_aux.nombre, rank_aux.puntaje);
             }
-            fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
+            leidos = fscanf(archivo, FORMATO_LECTURA_RANKING, rank_aux.nombre, &(rank_aux.puntaje));
         }
         fclose(archivo);
-    } else {
-        fprintf(archivo_aux, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
     }
-    fclose(archivo_aux);
+    fprintf(archivo_nuevo, FORMATO_ESCRITURA_RANKING, rank.nombre, rank.puntaje);
+    fclose(archivo_nuevo);
     rename(ARCHIVO_RANKING_AUX, ranking);
-}
-
-
-
-void grabar_rank(char config[MAX_ARCHIVO], rank_t rank) {
-    if (ingresa_archivo(config)) {
-        grabar_rank_aux(config, rank);
+    if(ingresa_archivo(config)) {
+        char sin_config[MAX_ARCHIVO];
+        strcpy(sin_config, SIN_ARCHIVO);
+        grabar_rank(sin_config, rank);
     }
-    grabar_rank_aux((char *)SIN_ARCHIVO, rank);
 }
 
 
@@ -505,8 +505,9 @@ void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
     }
     leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
     printf(FORMATO_ENCABEZADO_RANKING);
+    printf(SUBRAYADO);
     while ((leido != EOF) && (i < cant_a_listar || cant_a_listar == INDEFINIDO)) {
-        printf(FORMATO_IMPRESION_RANKING, i, rank.puntaje, rank.nombre);
+        printf(FORMATO_IMPRESION_RANKING, i, rank.nombre, rank.puntaje);
         leido = fscanf(archivo, FORMATO_LECTURA_RANKING, rank.nombre, &rank.puntaje);
         i++;
     }

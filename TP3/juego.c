@@ -24,7 +24,7 @@
 #define AGREGADO 0
 
 const char IGNORAR = 'X';
-const float DELAY = 0.4f, DELAY_REPRODUCCION = 1.0f;
+const float DELAY = 0.3f, DELAY_REPRODUCCION = 1.0f;
 
 const int MINIMO_MATRIZ = 0, MAXIMO_MATRIZ_MENOR = 14, MAXIMO_MATRIZ_MAYOR = 19;
 const int AL_ESTE = 14, AL_OESTE = 5;

@@ -15,7 +15,8 @@ const int   MAX_DATO = 10,
             MAX_DEFENSORES_EXTRAS = 20,
             MAX_DEFENSORES_INICIO = 20,
             MAX_CRITICO = 100,
-            MAX_FALLO = 100;
+            MAX_FALLO = 100,
+            MAX_ETIQUETA = 200;
 const float MAX_VELOCIDAD = 2.0;
 
 const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
@@ -34,7 +35,7 @@ const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
  *      Se permite la opción INDEFINIDO para vlores predeterminados del juego.
  */
 bool es_resistencia_valida(int dato_num) {
-    return !dato_num && (dato_num >= INDEFINIDO && dato_num < MAX_RESISTENCIA);
+    return (dato_num) && (dato_num >= INDEFINIDO) && (dato_num < MAX_RESISTENCIA);
 }
 
 /*
@@ -79,7 +80,7 @@ bool es_fallo_valido(int dato_num) {
  *      Se permite la opción INDEFINIDO para el valor predeterminado del juego.
  */
 bool es_velocidad_valida(double dato_num) {
-    return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_VELOCIDAD);
+    return (dato_num) && (dato_num >= INDEFINIDO) && (dato_num < MAX_VELOCIDAD);
 }
 
 /*
@@ -305,6 +306,7 @@ void pedir_camino(configuracion_t *configuracion) {
  * una configuración nueva con valores válidos.
  */
 void crear_configuracion(configuracion_t *configuracion) {
+    printf("\nIngrese los valores deseables, y para dejar los valores por defecto ingrese %i\n", INDEFINIDO);
     pedir_resistencia_torres(configuracion);
     pedir_defensores_extras(configuracion);
     for (int i=0; i < MAX_NIVELES; i++)
@@ -373,6 +375,25 @@ void escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHI
 
 
 /*
+ * Pre: Recibe dos cadenas de caracteres.
+ * Pos: Comprueba su coincidencia hasta encontrar un signo FIN_ETIQUETA.
+ */
+bool tienen_misma_etiqueta(const char etiqueta_1[], const char etiqueta_2[]) {
+    bool son_iguales = true, fin_etiqueta = false;
+    size_t i = 0, j = 0, tope_1 = strlen(etiqueta_1), tope_2 = strlen(etiqueta_2);
+    while (i < tope_1 && j < tope_2 && son_iguales && !fin_etiqueta) {
+        if (etiqueta_1[i] == FIN_ETIQUETA)
+            fin_etiqueta = true;
+        if (etiqueta_1[i] != etiqueta_2[j])
+            son_iguales = false;
+        i++;
+        j++;
+    }
+    return son_iguales;
+}
+
+
+/*
  * Pre: Recibe el nombre de un archivo de configuración que se desee leer o ninguno.
  * Pos: Inicializará la configuación con los datos que se hayan podido extraer del archivo.
  *      Los valores que no se hayan podido extraer del archivo, se inicializarán con los
@@ -387,9 +408,31 @@ void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIV
             printf("Probá con otra configuración.\n");
             return;
         }
-        /*
-         * buscar etiquetas en el archivo. escanear y definir los valores
-         */
+
+        char etiqueta[MAX_ETIQUETA];
+        fscanf(archivo, "%s", etiqueta);
+        while (!feof(archivo)) {
+            if (tienen_misma_etiqueta(etiqueta, RESISTENCIA_TORRES)) {
+                sscanf(etiqueta, RESISTENCIA_TORRES, &(configuracion->juego.torres.resistencia_torre_1), &(configuracion->juego.torres.resistencia_torre_2));
+            } else if (tienen_misma_etiqueta(etiqueta, ENANOS_EXTRA)) {
+                sscanf(etiqueta, ENANOS_EXTRA, &(configuracion->juego.torres.enanos_extra), &(configuracion->costo_enanos_torre_1), &(configuracion->costo_enanos_torre_2));
+            } else if (tienen_misma_etiqueta(etiqueta, ELFOS_EXTRA)) {
+                sscanf(etiqueta, ELFOS_EXTRA, &(configuracion->juego.torres.elfos_extra), &(configuracion->costo_elfos_torre_1), &(configuracion->costo_elfos_torre_2));
+            } else if (tienen_misma_etiqueta(etiqueta, ENANOS_INICIO)) {
+                sscanf(etiqueta, ENANOS_INICIO, &(configuracion->enanos_inicio[0]), &(configuracion->enanos_inicio[1]), &(configuracion->enanos_inicio[2]), &(configuracion->enanos_inicio[3]));
+            } else if (tienen_misma_etiqueta(etiqueta, ELFOS_INICIO)) {
+                sscanf(etiqueta, ELFOS_INICIO, &(configuracion->elfos_inicio[0]), &(configuracion->elfos_inicio[1]), &(configuracion->elfos_inicio[2]), &(configuracion->elfos_inicio[3]));
+            } else if (tienen_misma_etiqueta(etiqueta, ENANOS_ANIMO)) {
+                sscanf(etiqueta, ENANOS_ANIMO, &(configuracion->juego.fallo_gimli), &(configuracion->juego.critico_gimli));
+            } else if (tienen_misma_etiqueta(etiqueta, ELFOS_ANIMO)) {
+                sscanf(etiqueta, ELFOS_ANIMO, &(configuracion->juego.fallo_legolas), &(configuracion->juego.critico_legolas));
+            } else if (tienen_misma_etiqueta(etiqueta, VELOCIDAD_CONFIG)) {
+                sscanf(etiqueta, VELOCIDAD_CONFIG, &(configuracion->velocidad));
+            } else if (tienen_misma_etiqueta(etiqueta, CAMINOS)) {
+                sscanf(etiqueta, CAMINOS, configuracion->caminos);
+            }
+            fscanf(archivo, "%s", etiqueta);
+        }
         fclose(archivo);
     }
 }

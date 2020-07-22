@@ -18,14 +18,7 @@ entrega:
 .PHONY: tmp clean
 
 tmp:
-	touch tmp.txt
-	touch tmp.csv
-	touch tmp.dat
-	touch tmp.zip
+	touch tmp.txt tmp.csv tmp.dat tmp.zip
 
 clean: tmp
-	rm $(EXEC)
-	rm *.txt
-	rm *.csv
-	rm *.dat
-	rm *.zip
+	rm $(EXEC) *.txt *.csv *.dat *.zip

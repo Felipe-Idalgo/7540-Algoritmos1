@@ -1,7 +1,6 @@
-#include <stdio.h>
+#include "defendiendo_torres.h"
 #include <stdbool.h>
 #include <math.h>
-#include "defendiendo_torres.h"
 
 #define ENANOS 'G'
 #define ELFOS 'L'

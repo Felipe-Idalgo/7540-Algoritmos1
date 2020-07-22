@@ -1,7 +1,6 @@
 #define AUTOR "MG"
 #define FECHA "Julio2020"
 
-#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
@@ -10,6 +9,7 @@
 #include "animos.h"
 #include "utiles.h"
 #include "juego.h"
+#include "archivos.h"
 
 #define ENANOS 'G'
 #define ELFOS 'L'
@@ -50,7 +50,6 @@ const int MAX_ENEMIGOS_PRIMER_NIVEL = 100, MAX_ENEMIGOS_SEGUND_NIVEL = 200,
           MAX_ENEMIGOS_TERCER_NIVEL = 300, MAX_ENEMIGOS_CUARTO_NIVEL = 500;
 
 const int SIN_CAMINO = 0, SIN_DEFENSORES = 0, SIN_ENEMIGOS = 0;
-
 
 
 //~ Detiene el tiempo, limpia la consola y muestra el juego.

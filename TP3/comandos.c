@@ -5,22 +5,25 @@
 #include "defendiendo_torres.h"
 #include "juego.h"
 #include "configuracion.h"
-
-
+#include "archivos.h"
 
 const int   PROGRAMA = 0, COMANDO = 1, ARGUMENTO = 2;
 
-const char  RANKING[] = "ranking", CREAR_CAMINOS[] = "crear_camino",
-            CREAR_CONFIGURACION[] = "crear_configuracion", VER_REPETICION[] = "poneme_la_repe",
+const char  RANKING[] = "ranking",
+            CREAR_CAMINOS[] = "crear_camino",
+            CREAR_CONFIGURACION[] = "crear_configuracion",
+            VER_REPETICION[] = "poneme_la_repe",
             JUGAR_PARTIDA[] = "jugar";
 
 const char  LISTAR[] = "listar=", CONFIGURACION[] = "config=",
             GRABACION[] = "grabacion=", VELOCIDAD[] = "velocidad=";
 
-const char  SIN_ARCHIVO[] = "", SEPARACION[] = "_", CARACTER_FINAL = '\0';
+const char  SEPARACION[] = "_", CARACTER_FINAL = '\0';
 
-const char  EXTENSION[] = ".", EXTENSION_RANKING[] = ".csv", EXTENSION_CAMINOS[] = ".txt",
-            EXTENSION_CONFIGURACION[] = ".txt", EXTENSION_GRABACION[] = ".dat";
+const char  EXTENSION_RANKING[] = ".csv",
+            EXTENSION_CAMINOS[] = ".txt",
+            EXTENSION_CONFIGURACION[] = ".txt",
+            EXTENSION_GRABACION[] = ".dat";
 
 const char  ARCHIVO_RANKING[] = "ranking",
             ARCHIVO_RANKING_AUX[] = "tmp.csv",
@@ -33,8 +36,6 @@ const char  ARCHIVO_RANKING[] = "ranking",
 const int   LIMITE_ARGUMENTOS_RANKING = 4, LIMITE_ARGUMENTOS_CREAR_CAMINOS = 3,
             LIMITE_ARGUMENTOS_CREAR_CONFIGURACION = 3, LIMITE_ARGUMENTOS_VER_REPETICION = 4,
             LIMITE_ARGUMENTOS_JUGAR_PARTIDA = 4;
-
-const char  LECTURA[] = "r", ESCRITURA[] = "w";
 
 
 

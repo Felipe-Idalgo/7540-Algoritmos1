@@ -1,5 +1,6 @@
 
 #include "defendiendo_torres.h"
+#include "archivos.h"
 #include "configuracion.h"
 #include <stdbool.h>
 #include <string.h>
@@ -8,9 +9,6 @@
 #define ELFOS 'L'
 #define TORRE_UNO 1
 #define TORRE_DOS 2
-#define LECTURA "r"
-#define ESCRITURA "w"
-#define SIN_ARCHIVO ""
 
 const int   MAX_DATO = 10,
             MAX_RESISTENCIA = 1000,
@@ -30,36 +28,73 @@ const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
             VELOCIDAD_CONFIG[] = "VELOCIDAD=%f\n",
             CAMINOS[] = "CAMINOS=%s\n";
 
-
+/*
+ * Pre: Recibe el valor numérico de un dato ingresado por el usuario.
+ * Pos: Devuelve true si se ha ingresado un número mayor a 0 y menor a MAX_RESISTENCIA.
+ *      Se permite la opción INDEFINIDO para vlores predeterminados del juego.
+ */
 bool es_resistencia_valida(int dato_num) {
-    return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_RESISTENCIA);
+    return !dato_num && (dato_num >= INDEFINIDO && dato_num < MAX_RESISTENCIA);
 }
 
+/*
+ * Pre: Recibe el valor numérico de un dato ingresado por el usuario.
+ * Pos: Devuelve true si el valor numérico se encuentra entre 0 y MAX_DEFENSORES_EXTRAS.
+ *      Se permite la opción INDEFINIDO para valores predeterminados del juego.
+ */
 bool es_defensa_extra_valida(int dato_num) {
-    return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_DEFENSORES_EXTRAS);
+    return (dato_num >= INDEFINIDO) && (dato_num < MAX_DEFENSORES_EXTRAS);
 }
 
+/*
+ * Pre: Recibe el valor numérico de un dato ingresado por el usuario.
+ * Pos: Devuelve true si el valor numérico se encuentra entre 0 y MAX_DEFENSORES_INICIO.
+ *      Se permite la opción INDEFINIDO para valores predeterminados del juego.
+ */
 bool es_defensa_inicial_valida(int dato_num) {
-    return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_DEFENSORES_INICIO);
+    return (dato_num >= INDEFINIDO) && (dato_num < MAX_DEFENSORES_INICIO);
 }
 
+/*
+ * Pre: Recibe el valor numérico de un dato ingresado por el usuario.
+ * Pos: Devuelve true si el valor se encuentra entre 0 y MAX_CRITICO.
+ *      Se permite la opción INDEFINIDO para valores predeterminados del juego.
+ */
 bool es_critico_valido(int dato_num) {
-    return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_CRITICO);
+    return (dato_num >= INDEFINIDO) && (dato_num < MAX_CRITICO);
 }
 
+/*
+ * Pre: Recibe el valor numérico de un dato ingresado por el usuario.
+ * Pos: Devuelve true si el valor se encuentra entre 0 y MAX_FALLO.
+ *      Se permite la opción INDEFINIDO para valores predeferminados del juego
+ */
 bool es_fallo_valido(int dato_num) {
-    return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_FALLO);
+    return (dato_num >= INDEFINIDO) && (dato_num < MAX_FALLO);
 }
 
+/*
+ * Pre: Recibe el valor decimal del dato ingresado por el usuario.
+ * Pos: Devuelve true si el valor es mayor a 0 y menor a MAX_VELOCIDAD.
+ *      Se permite la opción INDEFINIDO para el valor predeterminado del juego.
+ */
 bool es_velocidad_valida(double dato_num) {
     return !dato_num || (dato_num >= INDEFINIDO && dato_num < MAX_VELOCIDAD);
 }
 
-bool es_archivo(char archivo[]) {
+/*
+ * Pre: Recibe una cadena ingresada por el usuario.
+ * Pos: Devuelve true si el usuario ha ingresado algo en la cadena.
+ */
+bool hay_archivo(char archivo[]) {
     return strcmp(archivo, SIN_ARCHIVO);
 }
 
 
+/*
+ * Muestra en pantalla un mensaje donde le pide al usuario ingresar los valores
+ * de resistencia de las torres. Se definen uno a la vez en configuracion.
+ */
 void pedir_resistencia_torres(configuracion_t *configuracion) {
     int dato_num;
     char dato[MAX_DATO];
@@ -84,6 +119,10 @@ void pedir_resistencia_torres(configuracion_t *configuracion) {
 
 }
 
+/*
+ * Se pide al usuario ingresar la cantidad de defensores extras que se permitiran
+ * agregar en el juego. Una vez defininos se almacenan en configuracion.
+ */
 void pedir_defensores_extras(configuracion_t *configuracion) {
     int dato_num;
     char dato[MAX_DATO];
@@ -108,10 +147,14 @@ void pedir_defensores_extras(configuracion_t *configuracion) {
     configuracion->juego.torres.elfos_extra = dato_num;
 }
 
+/*
+ * Se pide al usuario ingresar la cantidad defensores que se agregarán al principio del nivel.
+ * Cada dato se almacenará en la configuración.
+ */
 void pedir_defensores_inicio(configuracion_t *configuracion, char tipo, int nivel) {
     int dato_num;
     char dato[MAX_DATO];
-    printf("Ingrese nº de defensores (%c) para nivel %i: ", tipo, nivel);
+    printf("Ingrese nº de defensores (%c) para nivel %i: ", tipo, nivel+1);
     scanf("%s", dato);
     dato_num = atoi(dato);
     while (!es_defensa_inicial_valida(dato_num)) {
@@ -123,6 +166,10 @@ void pedir_defensores_inicio(configuracion_t *configuracion, char tipo, int nive
     else configuracion->elfos_inicio[nivel] = dato_num;
 }
 
+/*
+ * Se pide al usuario ingresar el impacto que tendrá agregar un defensor de TIPO en cada torre.
+ * Cada dato se almacenara en la configuración.
+ */
 void pedir_costo_defensores(configuracion_t *configuracion) {
     int dato_num;
     char dato[MAX_DATO];
@@ -164,6 +211,10 @@ void pedir_costo_defensores(configuracion_t *configuracion) {
     configuracion->costo_elfos_torre_2 = dato_num;
 }
 
+/*
+ * Se pide al usuario ingresar la probabilidad dar un ataque crítico para los defensores.
+ * Se almacenará en la configuración.
+ */
 void pedir_critico(configuracion_t *configuracion) {
     int dato_num;
     char dato[MAX_DATO];
@@ -187,6 +238,10 @@ void pedir_critico(configuracion_t *configuracion) {
     configuracion->juego.critico_legolas = dato_num;
 }
 
+/*
+ * Se pide al usuario ingresar la probabilidad de fallo de los defensores
+ * Se almacenará en la configuración.
+ */
 void pedir_fallo(configuracion_t *configuracion) {
     int dato_num;
     char dato[MAX_DATO];
@@ -210,6 +265,10 @@ void pedir_fallo(configuracion_t *configuracion) {
     configuracion->juego.fallo_legolas = dato_num;
 }
 
+/*
+ * Se pide al usuario ingresar el intervalo de tiempo entre turnos.
+ * El valor se almacenará en la configuración.
+ */
 void pedir_velocidad(configuracion_t *configuracion) {
     double dato_num;
     char dato[MAX_DATO];
@@ -224,17 +283,27 @@ void pedir_velocidad(configuracion_t *configuracion) {
     configuracion->velocidad = (float) dato_num;
 }
 
+/*
+ * Se pide al usuario ingresar el archivo donde se encuentran los caminos a utilizar.
+ * Se guarda el nombre del archivo o INDEFINIDO si se desea usar el modo predeterminado
+ * del juego, pero no se comprueba la existencia de dicho archivo ni si se tienen los permisos
+ * para leerlo.
+ */
 void pedir_camino(configuracion_t *configuracion) {
     char dato[MAX_DATO];
     printf("Ingrese un camino: ");
     scanf("%s", dato);
-    while (!es_archivo(dato)) {
+    while (!hay_archivo(dato)) {
         printf("Hubo un problema. Probá nuevamente: ");
         scanf("%s", dato);
     }
     strcpy(configuracion->caminos, dato);
 }
 
+/*
+ * Muestra en pantalla todos los mensajes para que el usuario pueda crear
+ * una configuración nueva con valores válidos.
+ */
 void crear_configuracion(configuracion_t *configuracion) {
     pedir_resistencia_torres(configuracion);
     pedir_defensores_extras(configuracion);
@@ -249,6 +318,9 @@ void crear_configuracion(configuracion_t *configuracion) {
     pedir_camino(configuracion);
 }
 
+/*
+ * Inicializa la configuración cuando no se ha leído un archivo de configuración.
+ */
 void inicializar_configuracion(configuracion_t *configuracion) {
     configuracion->juego.torres.resistencia_torre_1 = INDEFINIDO;
     configuracion->juego.torres.resistencia_torre_2 = INDEFINIDO;
@@ -270,13 +342,19 @@ void inicializar_configuracion(configuracion_t *configuracion) {
     strcpy(configuracion->caminos, "-1");
 }
 
+
+/*
+ * Pre: Recibe la configuración que se desee guardar y el nombre del archivo que se utilizará
+ * Pos: Si el archivo no existe se creará. Si existe se sobreescribirá. En él se guardarán
+ *      Los datos de la configuración recibida.
+ */
 void escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHIVO]) {
     FILE * archivo;
     juego_t juego;
     torres_t torres;
     archivo = fopen(config, ESCRITURA);
     if (!archivo) {
-        printf("No estoy teniendo permisos para escribir");
+        printf("No estoy teniendo permisos suficientes para escribir.\n");
         return;
     }
     juego = configuracion.juego;
@@ -293,17 +371,24 @@ void escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHI
     fclose(archivo);
 }
 
+
+/*
+ * Pre: Recibe el nombre de un archivo de configuración que se desee leer o ninguno.
+ * Pos: Inicializará la configuación con los datos que se hayan podido extraer del archivo.
+ *      Los valores que no se hayan podido extraer del archivo, se inicializarán con los
+ *      predeterminados.
+ */
 void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]) {
     FILE* archivo;
     inicializar_configuracion(configuracion);
-    if (es_archivo(config)) {
+    if (hay_archivo(config)) {
         archivo = fopen(config, LECTURA);
         if (!archivo) {
             printf("Probá con otra configuración.\n");
             return;
         }
         /*
-         * cargar
+         * buscar etiquetas en el archivo. escanear y definir los valores
          */
         fclose(archivo);
     }

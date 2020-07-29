@@ -87,7 +87,7 @@ int fallo_segun_tiempo(int tiempo) {
 
 
 
-//~ Definido en la defendiendo_torres.h
+//~ Definido en defendiendo_torres.h
 void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion) {
     *juego = configuracion.juego;
     inicializar_torres(&(juego->torres));

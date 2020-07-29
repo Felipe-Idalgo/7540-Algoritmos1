@@ -224,6 +224,12 @@ void obtener_camino_2(juego_t *juego, char camino[MAX_ARCHIVO]) {
 
 
 
+/*
+ * Pre: Recibe el número de nivel que se va a jugar, el tipo de defensores que se desea agregar
+ *      y la configuración elegida para el juego.
+ * Pos: Devuelve la cantidad de defensores que se deberían agregar según la configuración. Cuando
+ *      tiene valor INDEFINIDO, se toman los valores por default.
+ */
 int defensores_segun_configuracion(int nivel_actual, char tipo, configuracion_t configuracion) {
     int defensores;
     if (tipo == ENANOS) {
@@ -276,6 +282,11 @@ void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) 
 
 
 
+/*
+ * Pre: Recibe el tipo de defensores, el número de torre y la configuración elegida.
+ * Pos: Devuelve el costo que tendría para la torre, usar un defensor, según la configuración.
+ *      Los valores INDEFINIDOs devuelven los valores por default.
+ */
 int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t configuracion){
     int costo;
     if (tipo == ENANOS && torre == TORRE_UNO) {
@@ -505,6 +516,9 @@ void mostrar_mensaje_final(int estado_juego) {
 
 
 
+/*
+ * Pide el nombre del jugador para guardar su puntaje.
+ */
 void pedir_nombre(char nombre[MAX_NOMBRE]) {
     printf("Ingrese su nombre: ");
     scanf("%s", nombre);
@@ -512,6 +526,10 @@ void pedir_nombre(char nombre[MAX_NOMBRE]) {
 
 
 
+/*
+ * Pre: Recibe el juego terminado.
+ * Pos: Devuelve la cantidad de enemigos que se han derrotado.
+ */
 int cantidad_de_enemigos_vencidos(juego_t juego) {
     int i, orcos_muertos = SIN_ENEMIGOS;
 
@@ -525,28 +543,34 @@ int cantidad_de_enemigos_vencidos(juego_t juego) {
             orcos_muertos += MAX_ENEMIGOS_SEGUND_NIVEL;
         case SEGUND_NIVEL:
             orcos_muertos += MAX_ENEMIGOS_PRIMER_NIVEL;
-        default:
-            break;
     }
     return orcos_muertos;
 }
 
 
 
+/*
+ * Pre: Recibe el valor de las torres después de ser inicializadas.
+ * Pos: Devuelve la suma de diferentes valores de la configuración
+ *      que facilitan el juego.
+ */
 int recursos_usados (torres_t torres, configuracion_t configuracion) {
     int i, recursos = torres.resistencia_torre_1;
     recursos += torres.resistencia_torre_2;
     recursos += torres.enanos_extra;
-    recursos += torres.elfos_extra;
+    recursos += 2 * torres.elfos_extra;
     for (i = 0; i < configuracion.max_niveles; i++) {
         recursos += defensores_segun_configuracion(i+1, ENANOS, configuracion);
-        recursos += defensores_segun_configuracion(i+1, ELFOS, configuracion);
+        recursos += 2 * defensores_segun_configuracion(i+1, ELFOS, configuracion);
     }
     return recursos;
 }
 
 
 
+/*
+ * Definido en juego.h
+ */
 void reproducir_juego(char grabacion[], float velocidad) {
     juego_t juego;
     FILE* archivo;
@@ -566,6 +590,9 @@ void reproducir_juego(char grabacion[], float velocidad) {
 
 
 
+/*
+ * Definido en juego.h
+ */
 void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank) {
     srand((unsigned)time(NULL));
     int recursos, viento, humedad;

@@ -1,4 +1,3 @@
-
 #include "defendiendo_torres.h"
 #include "archivos.h"
 #include "configuracion.h"
@@ -16,7 +15,7 @@ const int   MAX_DATO = 10,
             MAX_DEFENSORES_INICIO = 20,
             MAX_CRITICO = 100,
             MAX_FALLO = 100,
-            MAX_ETIQUETA = 200;
+            MAX_LINEA = 300;
 const float MAX_VELOCIDAD = 2.0;
 
 const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
@@ -301,10 +300,7 @@ void pedir_camino(configuracion_t *configuracion) {
     strcpy(configuracion->caminos, dato);
 }
 
-/*
- * Muestra en pantalla todos los mensajes para que el usuario pueda crear
- * una configuración nueva con valores válidos.
- */
+/* Definido en configuracin.h */
 void crear_configuracion(configuracion_t *configuracion) {
     printf("\nIngrese los valores deseables, y para dejar los valores por defecto ingrese %i\n", INDEFINIDO);
     pedir_resistencia_torres(configuracion);
@@ -345,11 +341,7 @@ void inicializar_configuracion(configuracion_t *configuracion) {
 }
 
 
-/*
- * Pre: Recibe la configuración que se desee guardar y el nombre del archivo que se utilizará
- * Pos: Si el archivo no existe se creará. Si existe se sobreescribirá. En él se guardarán
- *      Los datos de la configuración recibida.
- */
+/* Definido en configuracion.h */
 void escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHIVO]) {
     FILE * archivo;
     juego_t juego;
@@ -393,12 +385,7 @@ bool tienen_misma_etiqueta(const char etiqueta_1[], const char etiqueta_2[]) {
 }
 
 
-/*
- * Pre: Recibe el nombre de un archivo de configuración que se desee leer o ninguno.
- * Pos: Inicializará la configuación con los datos que se hayan podido extraer del archivo.
- *      Los valores que no se hayan podido extraer del archivo, se inicializarán con los
- *      predeterminados.
- */
+/* Definido en configuracion.h */
 void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]) {
     FILE* archivo;
     inicializar_configuracion(configuracion);
@@ -409,29 +396,29 @@ void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIV
             return;
         }
 
-        char etiqueta[MAX_ETIQUETA];
-        fscanf(archivo, "%s", etiqueta);
+        char linea[MAX_LINEA];
+        fscanf(archivo, "%s", linea);
         while (!feof(archivo)) {
-            if (tienen_misma_etiqueta(etiqueta, RESISTENCIA_TORRES)) {
-                sscanf(etiqueta, RESISTENCIA_TORRES, &(configuracion->juego.torres.resistencia_torre_1), &(configuracion->juego.torres.resistencia_torre_2));
-            } else if (tienen_misma_etiqueta(etiqueta, ENANOS_EXTRA)) {
-                sscanf(etiqueta, ENANOS_EXTRA, &(configuracion->juego.torres.enanos_extra), &(configuracion->costo_enanos_torre_1), &(configuracion->costo_enanos_torre_2));
-            } else if (tienen_misma_etiqueta(etiqueta, ELFOS_EXTRA)) {
-                sscanf(etiqueta, ELFOS_EXTRA, &(configuracion->juego.torres.elfos_extra), &(configuracion->costo_elfos_torre_1), &(configuracion->costo_elfos_torre_2));
-            } else if (tienen_misma_etiqueta(etiqueta, ENANOS_INICIO)) {
-                sscanf(etiqueta, ENANOS_INICIO, &(configuracion->enanos_inicio[0]), &(configuracion->enanos_inicio[1]), &(configuracion->enanos_inicio[2]), &(configuracion->enanos_inicio[3]));
-            } else if (tienen_misma_etiqueta(etiqueta, ELFOS_INICIO)) {
-                sscanf(etiqueta, ELFOS_INICIO, &(configuracion->elfos_inicio[0]), &(configuracion->elfos_inicio[1]), &(configuracion->elfos_inicio[2]), &(configuracion->elfos_inicio[3]));
-            } else if (tienen_misma_etiqueta(etiqueta, ENANOS_ANIMO)) {
-                sscanf(etiqueta, ENANOS_ANIMO, &(configuracion->juego.fallo_gimli), &(configuracion->juego.critico_gimli));
-            } else if (tienen_misma_etiqueta(etiqueta, ELFOS_ANIMO)) {
-                sscanf(etiqueta, ELFOS_ANIMO, &(configuracion->juego.fallo_legolas), &(configuracion->juego.critico_legolas));
-            } else if (tienen_misma_etiqueta(etiqueta, VELOCIDAD_CONFIG)) {
-                sscanf(etiqueta, VELOCIDAD_CONFIG, &(configuracion->velocidad));
-            } else if (tienen_misma_etiqueta(etiqueta, CAMINOS)) {
-                sscanf(etiqueta, CAMINOS, configuracion->caminos);
+            if (tienen_misma_etiqueta(linea, RESISTENCIA_TORRES)) {
+                sscanf(linea, RESISTENCIA_TORRES, &(configuracion->juego.torres.resistencia_torre_1), &(configuracion->juego.torres.resistencia_torre_2));
+            } else if (tienen_misma_etiqueta(linea, ENANOS_EXTRA)) {
+                sscanf(linea, ENANOS_EXTRA, &(configuracion->juego.torres.enanos_extra), &(configuracion->costo_enanos_torre_1), &(configuracion->costo_enanos_torre_2));
+            } else if (tienen_misma_etiqueta(linea, ELFOS_EXTRA)) {
+                sscanf(linea, ELFOS_EXTRA, &(configuracion->juego.torres.elfos_extra), &(configuracion->costo_elfos_torre_1), &(configuracion->costo_elfos_torre_2));
+            } else if (tienen_misma_etiqueta(linea, ENANOS_INICIO)) {
+                sscanf(linea, ENANOS_INICIO, &(configuracion->enanos_inicio[0]), &(configuracion->enanos_inicio[1]), &(configuracion->enanos_inicio[2]), &(configuracion->enanos_inicio[3]));
+            } else if (tienen_misma_etiqueta(linea, ELFOS_INICIO)) {
+                sscanf(linea, ELFOS_INICIO, &(configuracion->elfos_inicio[0]), &(configuracion->elfos_inicio[1]), &(configuracion->elfos_inicio[2]), &(configuracion->elfos_inicio[3]));
+            } else if (tienen_misma_etiqueta(linea, ENANOS_ANIMO)) {
+                sscanf(linea, ENANOS_ANIMO, &(configuracion->juego.fallo_gimli), &(configuracion->juego.critico_gimli));
+            } else if (tienen_misma_etiqueta(linea, ELFOS_ANIMO)) {
+                sscanf(linea, ELFOS_ANIMO, &(configuracion->juego.fallo_legolas), &(configuracion->juego.critico_legolas));
+            } else if (tienen_misma_etiqueta(linea, VELOCIDAD_CONFIG)) {
+                sscanf(linea, VELOCIDAD_CONFIG, &(configuracion->velocidad));
+            } else if (tienen_misma_etiqueta(linea, CAMINOS)) {
+                sscanf(linea, CAMINOS, configuracion->caminos);
             }
-            fscanf(archivo, "%s", etiqueta);
+            fscanf(archivo, "%s", linea);
         }
         fclose(archivo);
     }

@@ -16,7 +16,11 @@ typedef struct rank {
 void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank);
 
 /*
- *
+ * Se ingresa la grabación de una partida. Se reproducirá el juego
+ * en sus diferentes estadios sin interrupciones hasta finalizar.
+ * Sólo será posible ver los movimientos y los estados del juego.
+ * No se contará el puntaje. La velocidad es opciona, es el tiempo de
+ * espera entre turnos.
  */
 void reproducir_juego(char grabacion[], float velocidad);
 

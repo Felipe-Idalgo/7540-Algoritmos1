@@ -6,6 +6,7 @@
 #include "juego.h"
 #include "configuracion.h"
 #include "archivos.h"
+#include "caminos.h"
 
 const int   PROGRAMA = 0, COMANDO = 1, ARGUMENTO = 2;
 
@@ -455,23 +456,16 @@ void grabar_rank(char config[MAX_ARCHIVO], rank_t rank) {
     fclose(archivo_nuevo);
     rename(ARCHIVO_RANKING_AUX, ranking);
     /*
+     * Este codigo permitiría mantener un registro de las puntuaciones
+     * de todas las configuraciones en ranking.csv. Excede lo pedido por
+     * lo cual fue comentado.
+     * 
     if(ingresa_archivo(config)) {
         char sin_config[MAX_ARCHIVO];
         strcpy(sin_config, SIN_ARCHIVO);
         grabar_rank(sin_config, rank);
     }
     */
-}
-
-
-
-void crear_camino(int nivel_actual) {
-    /*
-     * crear_camino(1)
-     * crear_camino(2)
-     * crear_camino(3)
-     * crear_camino(4)
-     */
 }
 
 
@@ -505,13 +499,10 @@ void ejecutar_ranking(int cant_a_listar, char config[MAX_ARCHIVO]) {
 
 
 void ejecutar_crear_caminos(char caminos[MAX_ARCHIVO]) {
-    FILE* archivo = fopen(caminos, ESCRITURA);
-    if (!se_puede_abrir(archivo, caminos)) return;
-    /*
-     * crear caminos
-     * escribir_caminos
-     */
-    fclose(archivo);
+    crear_camino(1);
+    crear_camino(2);
+    crear_camino(3);
+    crear_camino(4);
 }
 
 

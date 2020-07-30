@@ -27,7 +27,7 @@ const char  EXTENSION_RANKING[] = ".csv",
             EXTENSION_GRABACION[] = ".dat";
 
 const char  ARCHIVO_RANKING[] = "ranking",
-            ARCHIVO_RANKING_AUX[] = "tmp.csv",
+            ARCHIVO_RANKING_AUX[] = "tmp",
             FORMATO_LECTURA_RANKING[] = "%[^;];%i\n",
             FORMATO_ESCRITURA_RANKING[] = "%s;%i\n",
             FORMATO_ENCABEZADO_RANKING[] = " G A N A D O R E S\n",

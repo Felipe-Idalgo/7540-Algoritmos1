@@ -1,5 +1,6 @@
 #ifndef __CONFIGURACION_H__
 #define __CONFIGURACION_H__
+#include <stdbool.h>
 
 /*
  * Muestra en pantalla todos los mensajes para que el usuario pueda crear
@@ -21,5 +22,7 @@ void escribir_configuracion(configuracion_t configuraciont, char config[MAX_ARCH
  *      predeterminados.
  */
 void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]);
+
+bool tienen_misma_etiqueta(const char etiqueta_1[], const char etiqueta_2[]);
 
 #endif /*__CONFIGURACION_H__*/

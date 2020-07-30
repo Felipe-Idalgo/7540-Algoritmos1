@@ -1,21 +1,20 @@
 #include "defendiendo_torres.h"
 #include "archivos.h"
 #include "configuracion.h"
-#include <stdbool.h>
 #include <string.h>
 
 #define ENANOS 'G'
 #define ELFOS 'L'
 #define TORRE_UNO 1
 #define TORRE_DOS 2
+#define CAMINOS_INDEFINIDOS "-1"
 
 const int   MAX_DATO = 10,
             MAX_RESISTENCIA = 1000,
             MAX_DEFENSORES_EXTRAS = 20,
             MAX_DEFENSORES_INICIO = 20,
             MAX_CRITICO = 100,
-            MAX_FALLO = 100,
-            MAX_LINEA = 300;
+            MAX_FALLO = 100;
 const float MAX_VELOCIDAD = 2.0;
 
 const char  RESISTENCIA_TORRES[] = "RESISTENCIA_TORRES=%i,%i\n",
@@ -337,7 +336,7 @@ void inicializar_configuracion(configuracion_t *configuracion) {
     configuracion->costo_elfos_torre_1 = INDEFINIDO;
     configuracion->costo_elfos_torre_2 = INDEFINIDO;
     configuracion->velocidad = INDEFINIDO;
-    strcpy(configuracion->caminos, "-1");
+    strcpy(configuracion->caminos, CAMINOS_INDEFINIDOS);
 }
 
 

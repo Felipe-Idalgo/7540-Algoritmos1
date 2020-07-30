@@ -26,9 +26,6 @@
 const char IGNORAR = 'X';
 const float DELAY = 0.3f, DELAY_REPRODUCCION = 1.0f;
 
-const int MINIMO_MATRIZ = 0, MAXIMO_MATRIZ_MENOR = 14, MAXIMO_MATRIZ_MAYOR = 19;
-const int AL_ESTE = 14, AL_OESTE = 5;
-
 const int ENANOS_INICIALES_PRIMER_NIVEL = 5,
           ELFOS_INICIALES_PRIMER_NIVEL = 0,
           ENANOS_INICIALES_SEGUND_NIVEL = 0,
@@ -49,7 +46,7 @@ const int ENANOS_INICIALES_PRIMER_NIVEL = 5,
 const int MAX_ENEMIGOS_PRIMER_NIVEL = 100, MAX_ENEMIGOS_SEGUND_NIVEL = 200,
           MAX_ENEMIGOS_TERCER_NIVEL = 300, MAX_ENEMIGOS_CUARTO_NIVEL = 500;
 
-const int SIN_CAMINO = 0, SIN_DEFENSORES = 0, SIN_ENEMIGOS = 0;
+const int SIN_DEFENSORES = 0, SIN_ENEMIGOS = 0;
 
 
 //~ Detiene el tiempo, limpia la consola y muestra el juego.
@@ -119,15 +116,6 @@ bool cuarto_nivel(juego_t juego) {
 
 
 
-//~ Pre: Recibe un numero de fila y un numero de columna para una matriz.
-//~ Pos: Inicializa una coordenada.
-void ubicar(coordenada_t *coordenada, int fil, int col){
-    coordenada->fil = fil;
-    coordenada->col = col;
-}
-
-
-
 //~ Pre: Recibe el numero de nivel y un rango sin inicializar.
 //~ Pos: Obtiene los mínimos y máximos de los valores que puede tomar una coordenada en determinado nivel.
 void conseguir_rango(int *min, int *max, int nivel) {
@@ -168,58 +156,6 @@ void pedir_coordenada(coordenada_t *coordenada, int nivel) {
     }
 
     ubicar(coordenada, fil, col);
-}
-
-
-
-//~ Pre: Recibe un juego en un nuevo nivel por inicializar.
-//~ Pos: Ubica la entrada los enemigos que atacaran a la torre 1 y la ubicación de esta. Genera el camino 1.
-void obtener_camino_1(juego_t *juego, char camino[MAX_ARCHIVO]) {
-    coordenada_t entrada_1, torre_1;
-
-    if (primer_nivel(*juego)) {
-        ubicar(&entrada_1, MAXIMO_MATRIZ_MENOR / 2, MAXIMO_MATRIZ_MENOR);
-        ubicar(&torre_1, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
-
-    } else if (segundo_nivel(*juego)) {
-        juego->nivel.tope_camino_1 = SIN_CAMINO;
-        return;
-
-    } else if (tercer_nivel(*juego)) {
-        ubicar(&entrada_1, MINIMO_MATRIZ, AL_ESTE);
-        ubicar(&torre_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
-
-    } else {
-        ubicar(&entrada_1, MAXIMO_MATRIZ_MAYOR, AL_ESTE);
-        ubicar(&torre_1, MINIMO_MATRIZ, AL_ESTE);
-    }
-    obtener_camino(juego->nivel.camino_1, &(juego->nivel.tope_camino_1), entrada_1, torre_1);
-}
-
-
-
-//~ Pre: Recibe un juego en un nuevo nivel por inicializar.
-//~ Pos: Ubica la entrada los enemigos que atacaran a la torre 2 y la ubicación de esta. Genera el camino 2.
-void obtener_camino_2(juego_t *juego, char camino[MAX_ARCHIVO]) {
-    coordenada_t entrada_2, torre_2;
-
-    if (primer_nivel(*juego)) {
-        juego->nivel.tope_camino_2 = SIN_CAMINO;
-        return;
-
-    } else if (segundo_nivel(*juego)) {
-        ubicar(&entrada_2, MAXIMO_MATRIZ_MENOR / 2, MINIMO_MATRIZ);
-        ubicar(&torre_2, MAXIMO_MATRIZ_MENOR / 2, MAXIMO_MATRIZ_MENOR);
-
-    } else if (tercer_nivel(*juego)) {
-        ubicar(&entrada_2, MINIMO_MATRIZ, AL_OESTE);
-        ubicar(&torre_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
-
-    } else {
-        ubicar(&entrada_2, MAXIMO_MATRIZ_MAYOR, AL_OESTE);
-        ubicar(&torre_2, MINIMO_MATRIZ, AL_OESTE);
-    }
-    obtener_camino(juego->nivel.camino_2, &(juego->nivel.tope_camino_2), entrada_2, torre_2);
 }
 
 
@@ -487,8 +423,7 @@ void mostrar_intro_nivel(juego_t juego, configuracion_t configuracion) {
 //~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos. Introduce el nivel con un mensaje.
 void cargar_nivel(juego_t *juego, configuracion_t configuracion) {
     mostrar_intro_nivel(*juego, configuracion);
-    obtener_camino_1(juego, configuracion.caminos);
-    obtener_camino_2(juego, configuracion.caminos);
+    cargar_caminos(*juego, configuracion.caminos);
     cargar_enemigos(juego);
     cargar_defensores_iniciales(juego, configuracion);
 }

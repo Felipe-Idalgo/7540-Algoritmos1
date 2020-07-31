@@ -534,8 +534,8 @@ void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank
     char animo_legolas, animo_gimli;
     juego_t juego;
     FILE* archivo;
-    if (strcmp(grabacion, "")) {
-        archivo = fopen(grabacion, "w");
+    if (strcmp(grabacion, SIN_ARCHIVO)) {
+        archivo = fopen(grabacion, ESCRITURA);
         if (!archivo) {
             printf("No se pudo iniciar la grabacion\n");
             return;
@@ -568,4 +568,5 @@ void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank
     rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
     printf("\nLograste %i puntos\n", rank->puntaje);
     pedir_nombre(rank->nombre);
+    return;
 }

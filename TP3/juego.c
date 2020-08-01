@@ -117,7 +117,6 @@ bool esta_en_rango(int num, int min, int max) {
 void pedir_coordenada(coordenada_t *coordenada, int nivel) {
     int fil, col, min, max;
     conseguir_rango(&min, &max, nivel);
-
     printf("\nIngrese fila: ");
     scanf("%i", &fil);
     while (!esta_en_rango(fil, min, max)) {

@@ -7,8 +7,8 @@
 
 #define ENANOS 'G'
 #define ELFOS 'L'
-#define TORRE_UNO 1
-#define TORRE_DOS 2
+#define TORRE_1 1
+#define TORRE_2 2
 #define CAMINOS_INDEFINIDOS "-1"
 
 const int   MAX_DATO = 10,
@@ -57,6 +57,15 @@ bool es_defensa_inicial_valida(int dato_num) {
 }
 
 /*
+ * Pre: Recibe el valor númerico de un dato ingresado por el usuario.
+ * Pos: Devuelve true si el valor se encuentra entre 0 y MAX_RESISTENCIA_INICIO.
+ *      Se permite INDEFINIDO para usar los valores predeterminados del juego.
+ */
+bool es_costo_valido(int dato_num) {
+    return es_resistencia_valida(dato_num) || !dato_num;
+}
+
+/*
  * Pre: Recibe el valor numérico de un dato ingresado por el usuario.
  * Pos: Devuelve true si el valor se encuentra entre 0 y MAX_CRITICO.
  *      Se permite la opción INDEFINIDO para valores predeterminados del juego.
@@ -92,13 +101,15 @@ bool hay_archivo(char archivo[]) {
 }
 
 /*
- * Muestra en pantalla un mensaje donde le pide al usuario ingresar los valores
- * de resistencia de las torres. Se definen uno a la vez en configuracion.
+ * Pre: Recibe por referencia la variable donde se almacenara el valor
+ *      de la resistencia de la torre, y el número de la torre que se pide.
+ * Pos: Muestra en pantalla un mensaje donde le pide al usuario ingresar los valores.
+ *      Se obtienen valores válidos.
  */
-void pedir_resistencia_torres(configuracion_t *configuracion) {
+void pedir_resistencia_torre(int *resistencia_torre, int torre) {
     int dato_num;
     char dato[MAX_DATO];
-    printf("Ingrese resistencia para la Torre %i: ", TORRE_UNO);
+    printf("Ingrese resistencia para la Torre %i: ", torre);
     scanf("%s", dato);
     dato_num = atoi(dato);
     while (!es_resistencia_valida(dato_num)) {
@@ -106,27 +117,28 @@ void pedir_resistencia_torres(configuracion_t *configuracion) {
         scanf("%s", dato);
         dato_num = atoi(dato);
     }
-    configuracion->juego.torres.resistencia_torre_1 = dato_num;
-    printf("Ingrese resistencia para la Torre %i: ", TORRE_DOS);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_resistencia_valida(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_RESISTENCIA);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->juego.torres.resistencia_torre_2 = dato_num;
-
+    *resistencia_torre = dato_num;
 }
 
 /*
- * Se pide al usuario ingresar la cantidad de defensores extras que se permitiran
- * agregar en el juego. Una vez defininos se almacenan en configuracion.
+ * Pide los valores de resistencia que quiera ingresar el usuario y los guarda en
+ * una configuracion.
  */
-void pedir_defensores_extras(configuracion_t *configuracion) {
+void obtener_resistencia_torres(configuracion_t *configuracion) {
+    pedir_resistencia_torre(&(configuracion->juego.torres.resistencia_torre_1), TORRE_1);
+    pedir_resistencia_torre(&(configuracion->juego.torres.resistencia_torre_2), TORRE_2);
+}
+
+/*
+ * Pre: Recibe por referencia la variable donde se almacenará la cantidad de
+ *      defensores extras, y el tipo que se quiera configurar.
+ * Pos: Se pide al usuario ingresar la cantidad de defensores que desee configurar.
+ *      Se obtendrán cantidades válidas.
+ */
+void pedir_defensores_extras(int *defensores_extras, char tipo) {
     int dato_num;
     char dato[MAX_DATO];
-    printf("Ingrese nº de defensores (%c) extras para las torres: ", ENANOS);
+    printf("Ingrese nº de defensores (%c) extras para las torres: ", tipo);
     scanf("%s", dato);
     dato_num = atoi(dato);
     while (!es_defensa_extra_valida(dato_num)) {
@@ -134,27 +146,28 @@ void pedir_defensores_extras(configuracion_t *configuracion) {
         scanf("%s", dato);
         dato_num = atoi(dato);
     }
-    configuracion->juego.torres.enanos_extra = dato_num;
-
-    printf("Ingrese nº de defensores (%c) extras para las torres: ", ELFOS);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_defensa_extra_valida(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_DEFENSORES_EXTRAS);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->juego.torres.elfos_extra = dato_num;
+    *defensores_extras = dato_num;
 }
 
 /*
- * Se pide al usuario ingresar la cantidad defensores que se agregarán al principio del nivel.
- * Cada dato se almacenará en la configuración.
+ * Pide al usuario que ingrese las cantidades de defensores extras con las que
+ * desee jugar y se guardarán en la configuración.
  */
-void pedir_defensores_inicio(configuracion_t *configuracion, char tipo, int nivel) {
+void obtener_defensores_extras(configuracion_t *configuracion) {
+    pedir_defensores_extras(&(configuracion->juego.torres.enanos_extra), ENANOS);
+    pedir_defensores_extras(&(configuracion->juego.torres.elfos_extra), ELFOS);
+}
+
+/*
+ * Pre: Recibe por referencia la variable donde se almacenarán los defensores
+ *      iniciales para determinado nivel y de determinado tipo.
+ * Pos: Se pide al usuario ingresar las cantidades de defensores que desee
+ *      configurar. Se obtendrán valores válidos.
+ */
+void pedir_defensores_inicio(int *defensores_inicio, char tipo, int nivel) {
     int dato_num;
     char dato[MAX_DATO];
-    printf("Ingrese nº de defensores (%c) para nivel %i: ", tipo, nivel+1);
+    printf("Ingrese nº de defensores (%c) para nivel %i: ", tipo, nivel);
     scanf("%s", dato);
     dato_num = atoi(dato);
     while (!es_defensa_inicial_valida(dato_num)) {
@@ -162,63 +175,61 @@ void pedir_defensores_inicio(configuracion_t *configuracion, char tipo, int nive
         scanf("%s", dato);
         dato_num = atoi(dato);
     }
-    if (tipo==ENANOS) configuracion->enanos_inicio[nivel] = dato_num;
-    else configuracion->elfos_inicio[nivel] = dato_num;
+    *defensores_inicio = dato_num;
 }
 
 /*
- * Se pide al usuario ingresar el impacto que tendrá agregar un defensor de TIPO en cada torre.
- * Cada dato se almacenara en la configuración.
+ * Permite al usuario configurar la cantidad de defensores iniciales que quiera
+ * por cada nivel y de cada tipo. Los datos se almacenarán en la configuración.
  */
-void pedir_costo_defensores(configuracion_t *configuracion) {
-    int dato_num;
-    char dato[MAX_DATO];
-    printf("Ingrese costo de %c para Torre %i: ", ENANOS, TORRE_UNO);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_resistencia_valida(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_RESISTENCIA);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
+void obtener_defensores_inicio(configuracion_t *configuracion) {
+    for (int nivel = 1; nivel <= MAX_NIVELES; nivel++) {
+        pedir_defensores_inicio(&(configuracion->enanos_inicio[nivel]), ENANOS, nivel);
+        pedir_defensores_inicio(&(configuracion->elfos_inicio[nivel]), ENANOS, nivel);
     }
-    configuracion->costo_enanos_torre_1 = dato_num;
-    printf("Ingrese costo de %c para Torre %i: ", ENANOS, TORRE_DOS);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_resistencia_valida(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_RESISTENCIA);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->costo_enanos_torre_2 = dato_num;
-    printf("Ingrese costo de %c para Torre %i: ", ELFOS, TORRE_UNO);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_resistencia_valida(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_RESISTENCIA);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->costo_elfos_torre_1 = dato_num;
-    printf("Ingrese costo de %c para Torre %i: ", ELFOS, TORRE_DOS);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_resistencia_valida(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_RESISTENCIA);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->costo_elfos_torre_2 = dato_num;
 }
 
 /*
- * Se pide al usuario ingresar la probabilidad dar un ataque crítico para los defensores.
- * Se almacenará en la configuración.
+ * Pre: Recibe por referencia el costo que tendra un defensor de determinado tipo
+ *      para una de las torres.
+ * Pos: Se le pedirá al usuario que ingrese el costo que tendrán los defensores
+ *      de dicho tipo para dicha torre. El valor obtenido será válido.
  */
-void pedir_critico(configuracion_t *configuracion) {
+void pedir_costo_defensores(int *costo, char tipo, int torre) {
     int dato_num;
     char dato[MAX_DATO];
-    printf("Ingrese porcentaje de criticidad de %c: ", ENANOS);
+    printf("Ingrese costo de %c para Torre %i: ", tipo, torre);
+    scanf("%s", dato);
+    dato_num = atoi(dato);
+    while (!es_costo_valido(dato_num)) {
+        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_RESISTENCIA);
+        scanf("%s", dato);
+        dato_num = atoi(dato);
+    }
+    *costo = dato_num;
+}
+
+/*
+ * Permite al usuario configurar el costo de los defensores y almacenar
+ * dichos datos en la configuración.
+ */
+void obtener_costo_defensores(configuracion_t *configuracion) {
+    pedir_costo_defensores(&(configuracion->costo_enanos_torre_1), ENANOS, TORRE_1);
+    pedir_costo_defensores(&(configuracion->costo_enanos_torre_2), ENANOS, TORRE_2);
+    pedir_costo_defensores(&(configuracion->costo_elfos_torre_1), ELFOS, TORRE_1);
+    pedir_costo_defensores(&(configuracion->costo_elfos_torre_2), ELFOS, TORRE_2);
+}
+
+/*
+ * Pre: Recibe por referencia la probabilidad de dar un ataque crítico
+ *      un defensor de dicho tipo.
+ * Pos: El usuario podrá ingresar la probabilidad que desee. Dicho dato
+ *      será válido.
+ */
+void pedir_critico(int *critico, char tipo) {
+    int dato_num;
+    char dato[MAX_DATO];
+    printf("Ingrese porcentaje de criticidad de %c: ", tipo);
     scanf("%s", dato);
     dato_num = atoi(dato);
     while (!es_critico_valido(dato_num)) {
@@ -226,26 +237,28 @@ void pedir_critico(configuracion_t *configuracion) {
         scanf("%s", dato);
         dato_num = atoi(dato);
     }
-    configuracion->juego.critico_gimli = dato_num;
-    printf("Ingrese porcentaje de criticidad de %c: ", ELFOS);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_critico_valido(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_CRITICO);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->juego.critico_legolas = dato_num;
+    *critico = dato_num;
 }
 
 /*
- * Se pide al usuario ingresar la probabilidad de fallo de los defensores
- * Se almacenará en la configuración.
+ * Se pide al usuario ingresar la probabilidad de dar un ataque crítico
+ * por cada defensor y los datos se guardarán en la configuración.
  */
-void pedir_fallo(configuracion_t *configuracion) {
+void obtener_critico(configuracion_t *configuracion) {
+    pedir_critico(&(configuracion->juego.critico_gimli), ENANOS);
+    pedir_critico(&(configuracion->juego.critico_legolas), ELFOS);
+}
+
+/*
+ * Pre: Recibe por referencia la probabilidad de fallar un ataque para
+ *      un defensor de dicho tipo.
+ * Pos: El usuario podrá ingresar la probabilidad que desee. Dicho dato
+ *      será válido.
+ */
+void pedir_fallo(int *fallo, char tipo) {
     int dato_num;
     char dato[MAX_DATO];
-    printf("Ingrese porcentaje de fallo de %c: ", ENANOS);
+    printf("Ingrese porcentaje de fallo de %c: ", tipo);
     scanf("%s", dato);
     dato_num = atoi(dato);
     while (!es_fallo_valido(dato_num)) {
@@ -253,16 +266,16 @@ void pedir_fallo(configuracion_t *configuracion) {
         scanf("%s", dato);
         dato_num = atoi(dato);
     }
-    configuracion->juego.fallo_gimli = dato_num;
-    printf("Ingrese porcentaje de fallo de %c: ", ELFOS);
-    scanf("%s", dato);
-    dato_num = atoi(dato);
-    while (!es_fallo_valido(dato_num)) {
-        printf("Hubo un problema. Ingresa un valor entre %i y %i: ", INDEFINIDO, MAX_FALLO);
-        scanf("%s", dato);
-        dato_num = atoi(dato);
-    }
-    configuracion->juego.fallo_legolas = dato_num;
+    *fallo = dato_num;
+}
+
+/*
+ * Se pide al usuario ingresar la probabilidad de fallar un ataque para
+ * cada defensor y los datos se guardarán en la configuración.
+ */
+void obtener_fallo(configuracion_t *configuracion) {
+    pedir_fallo(&(configuracion->juego.fallo_gimli), ENANOS);
+    pedir_fallo(&(configuracion->juego.fallo_legolas), ELFOS);
 }
 
 /*
@@ -306,15 +319,13 @@ void pedir_camino(configuracion_t *configuracion) {
  */
 void crear_configuracion(configuracion_t *configuracion) {
     printf("\nIngrese los valores deseables, y para dejar los valores por defecto ingrese %i\n", INDEFINIDO);
-    pedir_resistencia_torres(configuracion);
-    pedir_defensores_extras(configuracion);
-    for (int i=0; i < MAX_NIVELES; i++)
-        pedir_defensores_inicio(configuracion, ENANOS, i);
-    for (int i=0; i < MAX_NIVELES; i++)
-        pedir_defensores_inicio(configuracion, ELFOS, i);
-    pedir_costo_defensores(configuracion);
-    pedir_critico(configuracion);
-    pedir_fallo(configuracion);
+    obtener_resistencia_torres(configuracion);
+    obtener_defensores_extras(configuracion);
+    obtener_defensores_inicio(configuracion);
+    obtener_defensores_inicio(configuracion);
+    obtener_costo_defensores(configuracion);
+    obtener_critico(configuracion);
+    obtener_fallo(configuracion);
     pedir_velocidad(configuracion);
     pedir_camino(configuracion);
 }

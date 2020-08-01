@@ -143,42 +143,24 @@ void intercambiar_coordenadas(coordenada_t *coord_1, coordenada_t *coord_2) {
 }
 
 /*
- * Pre: Recibe la estructura de un juego y el número del camino que se desee formar.
- * Pos: Se utilizarán juego para mostrarse el mapa. Se utilizarán las estructuras de
- *      los caminos 1 y 2 para formar los nuevos caminos.
- *      El camino no debería alcanzar la MAX_LONGITUD_CAMINO.
+ * Pre: Recibe por referencia la estructura de un juego en un nivel,
+ *      el camino que se va a crear y su tope.
+ * Pos: Se utilizará juego para mostrarse el mapa. Se pedirá al usuario que ingrese
+ *      un movimiento válido y se mostrará como avanza en el mapa hasta llegar a la
+ *      torre.
  */
-void construir_camino(juego_t *juego, int camino) {
-    int i = 2;
-    system("clear");
+void construir_camino(juego_t *juego, coordenada_t camino[MAX_LONGITUD_CAMINO], int *tope) {
     system("clear");
     mostrar_juego(*juego);
-    if (camino == CAMINO_UNO) {
-        juego->nivel.camino_1[i] = juego->nivel.camino_1[i-2];
-        avanzar(&(juego->nivel.camino_1[i]), juego->nivel.camino_1[i-2], juego->nivel_actual);
-        while (!es_misma_coordenada(juego->nivel.camino_1[i], juego->nivel.camino_1[i-1])
-            && i < MAX_LONGITUD_CAMINO-1) {
-            intercambiar_coordenadas(&(juego->nivel.camino_1[i]), &(juego->nivel.camino_1[i-1]));
-            juego->nivel.tope_camino_1 = 1 + i++;
-            system("clear");
-            mostrar_juego(*juego);
-            juego->nivel.camino_1[i] = juego->nivel.camino_1[i-2];
-            avanzar(&(juego->nivel.camino_1[i]), juego->nivel.camino_1[i-3], juego->nivel_actual);
-        }
-        juego->nivel.tope_camino_1 = 1 + i++;
-    } else {
-        juego->nivel.camino_2[i] = juego->nivel.camino_2[i-2];
-        avanzar(&(juego->nivel.camino_2[i]), juego->nivel.camino_2[i-2], juego->nivel_actual);
-        while (!es_misma_coordenada(juego->nivel.camino_2[i], juego->nivel.camino_2[i-1])
-            && i < MAX_LONGITUD_CAMINO-1) {
-            intercambiar_coordenadas(&(juego->nivel.camino_2[i]), &(juego->nivel.camino_2[i-1]));
-            juego->nivel.tope_camino_2 = 1 + i++;
-            system("clear");
-            mostrar_juego(*juego);
-            juego->nivel.camino_2[i] = juego->nivel.camino_2[i-2];
-            avanzar(&(juego->nivel.camino_2[i]), juego->nivel.camino_2[i-3], juego->nivel_actual);
-        }
-        juego->nivel.tope_camino_2 = 1 + i++;
+    camino[*tope] = camino[*tope-2];
+    avanzar(&(camino[*tope]), camino[*tope-2], juego->nivel_actual);
+    while (!es_misma_coordenada(camino[*tope], camino[*tope-1]) && *tope < MAX_LONGITUD_CAMINO) {
+        intercambiar_coordenadas(&(camino[*tope]), &(camino[*tope-1]));
+        (*tope)++;
+        system("clear");
+        mostrar_juego(*juego);
+        camino[*tope] = camino[*tope-2];
+        avanzar(&(camino[*tope]), camino[*tope-3], juego->nivel_actual);
     }
 }
 
@@ -193,10 +175,10 @@ void crear_camino(juego_t *juego) {
     ubicar_extremos_1(juego, &(juego->nivel.camino_1[0]), &(juego->nivel.camino_1[1]));
     ubicar_extremos_2(juego, &(juego->nivel.camino_2[0]), &(juego->nivel.camino_2[1]));
     if (juego->nivel_actual != SEGUND_NIVEL) {
-        construir_camino(juego, CAMINO_UNO);
+        construir_camino(juego, juego->nivel.camino_1, &(juego->nivel.tope_camino_1));
     }
     if (juego->nivel_actual != PRIMER_NIVEL) {
-        construir_camino(juego, CAMINO_DOS);
+        construir_camino(juego, juego->nivel.camino_2, &(juego->nivel.tope_camino_2));
     }
 }
 

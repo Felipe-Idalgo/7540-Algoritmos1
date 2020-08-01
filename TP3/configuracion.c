@@ -3,6 +3,8 @@
 #include "configuracion.h"
 #include <string.h>
 
+#define ERROR -1
+
 #define ENANOS 'G'
 #define ELFOS 'L'
 #define TORRE_UNO 1
@@ -88,7 +90,6 @@ bool es_velocidad_valida(double dato_num) {
 bool hay_archivo(char archivo[]) {
     return strcmp(archivo, SIN_ARCHIVO);
 }
-
 
 /*
  * Muestra en pantalla un mensaje donde le pide al usuario ingresar los valores
@@ -299,7 +300,10 @@ void pedir_camino(configuracion_t *configuracion) {
     strcpy(configuracion->caminos, dato);
 }
 
-/* Definido en configuracin.h */
+/*
+ * Muestra en pantalla todos los mensajes para que el usuario pueda crear
+ * una configuración nueva con valores válidos.
+ */
 void crear_configuracion(configuracion_t *configuracion) {
     printf("\nIngrese los valores deseables, y para dejar los valores por defecto ingrese %i\n", INDEFINIDO);
     pedir_resistencia_torres(configuracion);
@@ -339,16 +343,19 @@ void inicializar_configuracion(configuracion_t *configuracion) {
     strcpy(configuracion->caminos, CAMINOS_INDEFINIDOS);
 }
 
-
-/* Definido en configuracion.h */
-void escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHIVO]) {
+/*
+ * Pre: Recibe la configuración que se desee guardar y el nombre del archivo que se utilizará
+ * Pos: Si el archivo no existe se creará. Si existe se sobreescribirá. En él se guardarán
+ *     los datos de la configuración recibida.
+ */
+int escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHIVO]) {
     FILE * archivo;
     juego_t juego;
     torres_t torres;
     archivo = fopen(config, ESCRITURA);
     if (!archivo) {
         printf("No estoy teniendo permisos suficientes para escribir.\n");
-        return;
+        return ERROR;
     }
     juego = configuracion.juego;
     torres = juego.torres;
@@ -362,8 +369,17 @@ void escribir_configuracion(configuracion_t configuracion, char config[MAX_ARCHI
     fprintf(archivo, VELOCIDAD_CONFIG, configuracion.velocidad);
     fprintf(archivo, CAMINOS, configuracion.caminos);
     fclose(archivo);
+    return !ERROR;
 }
 
+/*
+ * Definido en configuracion.h
+ */
+int crear_nueva_configuracion(char config[MAX_ARCHIVO]) {
+    configuracion_t configuracion;
+    crear_configuracion(&configuracion);
+    return escribir_configuracion(configuracion, config);
+}
 
 /*
  * Pre: Recibe dos cadenas de caracteres.
@@ -383,16 +399,17 @@ bool tienen_misma_etiqueta(const char etiqueta_1[], const char etiqueta_2[]) {
     return son_iguales;
 }
 
-
-/* Definido en configuracion.h */
-void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]) {
+/*
+ * Definido en configuracion.h
+ */
+int cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO]) {
     FILE* archivo;
     inicializar_configuracion(configuracion);
     if (hay_archivo(config)) {
         archivo = fopen(config, LECTURA);
         if (!archivo) {
             printf("Probá con otra configuración.\n");
-            return;
+            return !ERROR;
         }
 
         char linea[MAX_LINEA];
@@ -421,4 +438,5 @@ void cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIV
         }
         fclose(archivo);
     }
+    return !ERROR;
 }

@@ -3,13 +3,14 @@
 
 #include <stdbool.h>
 #include <string.h>
-#include <math.h>
-#include <time.h>
 #include "defendiendo_torres.h"
 #include "animos.h"
 #include "utiles.h"
 #include "juego.h"
 #include "archivos.h"
+#include "caminos.h"
+
+#define ERROR -1
 
 #define ENANOS 'G'
 #define ELFOS 'L'
@@ -48,7 +49,6 @@ const int MAX_ENEMIGOS_PRIMER_NIVEL = 100, MAX_ENEMIGOS_SEGUND_NIVEL = 200,
 
 const int SIN_DEFENSORES = 0, SIN_ENEMIGOS = 0;
 
-
 //~ Detiene el tiempo, limpia la consola y muestra el juego.
 void limpiar_y_mostrar(juego_t juego, float velocidad) {
     if (velocidad == INDEFINIDO) velocidad = DELAY;
@@ -57,16 +57,12 @@ void limpiar_y_mostrar(juego_t juego, float velocidad) {
     mostrar_juego(juego);
 }
 
-
-
 //~ Se queda en espera hasta que el usuario ingrese una nueva línea.
 void esperar() {
     printf("\n%c para seguir\n", IGNORAR);
     char nada_util;
     scanf(" %c", &nada_util);
 }
-
-
 
 //~ Primer mensaje. Le explica el juego al usuario.
 void mostrar_ayuda() {
@@ -82,15 +78,11 @@ void mostrar_ayuda() {
     esperar();
 }
 
-
-
 //~ Pre: Recibe un juego inicializado.
 //~ Pos: Devuelve true cuando se esta jugando el PRIMER_NIVEL.
 bool primer_nivel(juego_t juego) {
     return juego.nivel_actual == PRIMER_NIVEL;
 }
-
-
 
 //~ Pre: Recibe un juego inicializado.
 //~ Pos: Devuelve true cuando se esta jugando el SEGUND_NIVEL.
@@ -98,23 +90,11 @@ bool segundo_nivel(juego_t juego) {
     return juego.nivel_actual == SEGUND_NIVEL;
 }
 
-
-
 //~ Pre: Recibe un juego inicializado.
 //~ Pos: Devuelve true cuando se esta jugando el TERCER_NIVEL.
 bool tercer_nivel(juego_t juego) {
     return juego.nivel_actual == TERCER_NIVEL;
 }
-
-
-
-//~ Pre: Recibe un juego inicializado.
-//~ Pos: Devuelve true cuando se esta jugando el CUARTO_NIVEL.
-bool cuarto_nivel(juego_t juego) {
-    return juego.nivel_actual == CUARTO_NIVEL;
-}
-
-
 
 //~ Pre: Recibe el numero de nivel y un rango sin inicializar.
 //~ Pos: Obtiene los mínimos y máximos de los valores que puede tomar una coordenada en determinado nivel.
@@ -126,15 +106,11 @@ void conseguir_rango(int *min, int *max, int nivel) {
         *max = MAXIMO_MATRIZ_MAYOR;
 }
 
-
-
 //~ Pre: Recibe un numero ingresado por el usuario y un rango adecuado al nivel.
 //~ Pos: Devuelve true si se encuentra entre los valores válidos que puede tomar una coordenada.
 bool esta_en_rango(int num, int min, int max) {
     return (num >= min && num <= max);
 }
-
-
 
 //~ Pre: Recibe un numero de nivel y una coordenada sin inicializar.
 //~ Pos: Inicializa la coordenada con valores válidos ingresados por el usuario, adecuados al nivel del juego.
@@ -154,11 +130,8 @@ void pedir_coordenada(coordenada_t *coordenada, int nivel) {
         printf("No esta en rango! Vuleva a ingresar una columna: ");
         scanf("%i", &col);
     }
-
     ubicar(coordenada, fil, col);
 }
-
-
 
 /*
  * Pre: Recibe el número de nivel que se va a jugar, el tipo de defensores que se desea agregar
@@ -188,8 +161,6 @@ int defensores_segun_configuracion(int nivel_actual, char tipo, configuracion_t 
     return defensores;
 }
 
-
-
 //~ Pre: Recibe un juego en un nuevo nivel por inicializar, la cantidad de defensores de un tipo y el tipo de defensores que deben añadirse.
 //~ Pos: Le permite al usuario elegir dónde ubicar a los defensores hasta cumplir con el número de defensores iniciales.
 void agregar_defensores_iniciales(juego_t *juego, int cantidad, char tipo) {
@@ -204,8 +175,6 @@ void agregar_defensores_iniciales(juego_t *juego, int cantidad, char tipo) {
     }
 }
 
-
-
 //~ Pre: Recibe un juego en nuevo nivel por inicializar y las indicaciones de defensores iniciales para añadirse.
 //~ Pos: Inicializa todos los defensores iniciales.
 void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) {
@@ -215,8 +184,6 @@ void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) 
     agregar_defensores_iniciales(juego, enanos_iniciales, ENANOS);
     agregar_defensores_iniciales(juego, elfos_iniciales, ELFOS);
 }
-
-
 
 /*
  * Pre: Recibe el tipo de defensores, el número de torre y la configuración elegida.
@@ -241,8 +208,6 @@ int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t con
     return costo;
 }
 
-
-
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un enano al juego.
 bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
@@ -255,8 +220,6 @@ bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
         && (torres.enanos_extra > SIN_DEFENSORES)
     );
 }
-
-
 
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un elfo al juego.
@@ -271,15 +234,11 @@ bool puede_agregar_elfos(torres_t torres, configuracion_t configuracion) {
     );
 }
 
-
-
 //~ Pre: Recibe la instancia de un juego y la de sus torres.
 //~ Pos: Devuelve verdadero si se permite agregar un elfo o un enano al juego.
 bool hay_extra_disponible(torres_t torres, configuracion_t configuracion) {
     return puede_agregar_enanos(torres, configuracion) || puede_agregar_elfos(torres, configuracion);
 }
-
-
 
 //~ Pre: Recibe la cantidad de enemigos que salieron en el nivel y si quedan defensores extras.
 //~ Pos: Devuelve verdadero si se dan todas las condiciones para agregar un defensor extra al juego.
@@ -295,8 +254,6 @@ bool se_puede_agregar_extra(juego_t juego, configuracion_t configuracion) {
     return (primera_condicion && segunda_condicion && tercera_condicion);
 }
 
-
-
 //~ Pre: Recibe un tipo ingresado por el usuario.
 //~ Pos: Devuelve verdadero si la respuesta es ENANOS, ELFOS o el usuario quiere IGNORAR el mensaje.
 bool es_tipo_valido(char tipo, torres_t torres, configuracion_t configuracion) {
@@ -306,7 +263,6 @@ bool es_tipo_valido(char tipo, torres_t torres, configuracion_t configuracion) {
         || (tipo == IGNORAR)
     );
 }
-
 
 //~ Pre: Recibe una instancia de juego y un tipo de defensor sin inicializar.
 //~ Pos: El usuario ingresa un tipo valido, para agregar un defensor o ignorar el mensaje.
@@ -323,7 +279,6 @@ void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
             printf(" o de las tropas de");
         printf(" %c (%i)", ELFOS, torres.elfos_extra);
     }
-
     printf("\nRecuerda que agregar un %c costará %i a la Torre1 y %i a la Torre 2.\n", ENANOS,
             costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion),
             costo_defensor_segun_configuracion(ENANOS, TORRE_DOS, configuracion));
@@ -345,8 +300,6 @@ void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
     }
 }
 
-
-
 //~ Elimina un enano de la torre_1.
 void descontar_enano(torres_t *torres, configuracion_t configuracion) {
     torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion);
@@ -361,31 +314,24 @@ void descontar_elfo(torres_t *torres, configuracion_t configuracion) {
     torres->elfos_extra--;
 }
 
-
-
 //~ Pre: Recibe un juego cuando es permitido agregar un defensor extra de las torres.
 //~ Pos: Agrega un defensor desde las torres al juego y lo descuenta de estas.
 void agregar_defensor_extra(juego_t *juego, configuracion_t configuracion) {
     char tipo;
     coordenada_t posicion;
-
     pedir_tipo(juego->torres, &tipo, configuracion);
     if (tipo == IGNORAR) {
         printf("\nNo se han agregado defensores.\n");
         return;
     }
-
     pedir_coordenada(&posicion, juego->nivel_actual);
     while (agregar_defensor(&(juego->nivel), posicion, tipo) != AGREGADO) {
         printf("\nLa posición está ocupada\n");
         pedir_coordenada(&posicion, juego->nivel_actual);
     }
-
     if (tipo == ENANOS) descontar_enano(&(juego->torres), configuracion);
     else descontar_elfo(&(juego->torres), configuracion);
 }
-
-
 
 //~ Pre: Recibe un juego en un nuevo nivel por inicializar.
 //~ Pos: Elimina los enemigos de una instancia anterior y define max_enemigos_nivel de nivel.
@@ -396,8 +342,6 @@ void cargar_enemigos(juego_t *juego){
     else if (tercer_nivel(*juego)) juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_TERCER_NIVEL;
     else juego->nivel.max_enemigos_nivel = MAX_ENEMIGOS_CUARTO_NIVEL;
 }
-
-
 
 //~ Selección de mensajes para mostrar al inicio de cada nivel.
 void mostrar_intro_nivel(juego_t juego, configuracion_t configuracion) {
@@ -417,18 +361,17 @@ void mostrar_intro_nivel(juego_t juego, configuracion_t configuracion) {
     esperar();
 }
 
-
-
 //~ Pre: Recibe un juego en una nueva instancia.
 //~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos. Introduce el nivel con un mensaje.
-void cargar_nivel(juego_t *juego, configuracion_t configuracion) {
+int cargar_nivel(juego_t *juego, configuracion_t configuracion) {
+    int salida;
     mostrar_intro_nivel(*juego, configuracion);
-    cargar_caminos(*juego, configuracion.caminos);
+    salida = cargar_caminos(juego, configuracion.caminos);
+    if (salida == ERROR) return ERROR;
     cargar_enemigos(juego);
     cargar_defensores_iniciales(juego, configuracion);
+    return !ERROR;
 }
-
-
 
 //~ Pre: Recibe el estado del juego una vez finalizado.
 //~ Pos: Muestra un mensaje según el estado GANADO o PERDIDO.
@@ -449,8 +392,6 @@ void mostrar_mensaje_final(int estado_juego) {
     }
 }
 
-
-
 /*
  * Pide el nombre del jugador para guardar su puntaje.
  */
@@ -458,8 +399,6 @@ void pedir_nombre(char nombre[MAX_NOMBRE]) {
     printf("Ingrese su nombre: ");
     scanf("%s", nombre);
 }
-
-
 
 /*
  * Pre: Recibe el juego terminado.
@@ -482,8 +421,6 @@ int cantidad_de_enemigos_vencidos(juego_t juego) {
     return orcos_muertos;
 }
 
-
-
 /*
  * Pre: Recibe el valor de las torres después de ser inicializadas.
  * Pos: Devuelve la suma de diferentes valores de la configuración
@@ -501,18 +438,16 @@ int recursos_usados (torres_t torres, configuracion_t configuracion) {
     return recursos;
 }
 
-
-
 /*
  * Definido en juego.h
  */
-void reproducir_juego(char grabacion[], float velocidad) {
+int reproducir_juego(char grabacion[], float velocidad) {
     juego_t juego;
     FILE* archivo;
     archivo = fopen(grabacion, "r");
     if (!archivo) {
         printf("No se pudo abrir la grabación.\n");
-        return;
+        return ERROR;
     }
     if (velocidad == INDEFINIDO) velocidad = DELAY_REPRODUCCION;
     fread(&juego, sizeof(juego_t), 1, archivo);
@@ -521,16 +456,14 @@ void reproducir_juego(char grabacion[], float velocidad) {
         fread(&juego, sizeof(juego_t), 1, archivo);
     }
     fclose(archivo);
+    return !ERROR;
 }
-
-
 
 /*
  * Definido en juego.h
  */
-void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank) {
-    srand((unsigned)time(NULL));
-    int recursos, viento, humedad;
+int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank) {
+    int salida, recursos, viento, humedad;
     char animo_legolas, animo_gimli;
     juego_t juego;
     FILE* archivo;
@@ -538,20 +471,22 @@ void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank
         archivo = fopen(grabacion, ESCRITURA);
         if (!archivo) {
             printf("No se pudo iniciar la grabacion\n");
-            return;
+            return ERROR;
         }
     }
 
     animos(&viento, &humedad, &animo_legolas, &animo_gimli);
     inicializar_juego(&juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
     recursos = recursos_usados(juego.torres, configuracion);
-    cargar_nivel(&juego, configuracion);
+    salida = cargar_nivel(&juego, configuracion);
+    if (salida == ERROR) return ERROR;
 
     if (archivo) fwrite(&juego, sizeof(juego_t), 1, archivo);
     while (estado_juego(juego) == JUGANDO) {
         if (estado_nivel(juego.nivel) == GANADO) {
             juego.nivel_actual++;
-            cargar_nivel(&juego, configuracion);
+            salida = cargar_nivel(&juego, configuracion);
+            if (salida == ERROR) return ERROR;
         }
         limpiar_y_mostrar(juego, configuracion.velocidad);
 
@@ -568,5 +503,5 @@ void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank
     rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
     printf("\nLograste %i puntos\n", rank->puntaje);
     pedir_nombre(rank->nombre);
-    return;
+    return !ERROR;
 }

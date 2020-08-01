@@ -12,8 +12,10 @@ typedef struct rank {
  * Se utilizará una configuración con valores predeterminados o personalizados.
  * Se podrá grabar la partida si se tienen los permisos suficientes.
  * El rank se guardará si se tienen los permisos suficientes.
+ * > Devuelve -1 si no se pudo utilizar la configuración o no se pudo grabar.
+ * > Devuelve 0 si no hubo problemas.
  */
-void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank);
+int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank);
 
 /*
  * Se ingresa la grabación de una partida. Se reproducirá el juego
@@ -21,7 +23,9 @@ void iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank
  * Sólo será posible ver los movimientos y los estados del juego.
  * No se contará el puntaje. La velocidad es opciona, es el tiempo de
  * espera entre turnos.
+ * > Devuelve -1 si no se pudo abrir el archivo.
+ * > Devuelve 0 si no hubo problemas.
  */
-void reproducir_juego(char grabacion[], float velocidad);
+int reproducir_juego(char grabacion[], float velocidad);
 
 #endif /*__JUEGO_H__*/

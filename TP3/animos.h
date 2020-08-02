@@ -2,7 +2,8 @@
 #define __ANIMOS_H__
 
 /*
- * pos: se obtiene el viento, la humedad, el animo del ejercito de legolas, y del ejercito de gimli por los datos ingresados por el usuario
+ * Pos: Se obtiene el viento, la humedad, el animo del ejercito de Legolas,
+ *       y del ejercito de Gimli por los datos ingresados por el usuario
  */
 void animos(int* viento , int* humedad , char* animo_legolas , char* animo_gimli);
 

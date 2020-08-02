@@ -459,11 +459,52 @@ int reproducir_juego(char grabacion[], float velocidad) {
 }
 
 /*
+ * Pre: Recibe los valores del juego de la configuracion.
+ * Pos: Devuelve true si al menos uno de ellos se encuentra indefinido.
+ */
+bool hay_valores_indefinidos(juego_t juego) {
+    return (
+        juego.torres.resistencia_torre_1 == INDEFINIDO
+        || juego.torres.resistencia_torre_2 == INDEFINIDO
+        || juego.torres.enanos_extra == INDEFINIDO
+        || juego.torres.elfos_extra == INDEFINIDO
+        || juego.fallo_gimli == INDEFINIDO
+        || juego.fallo_legolas == INDEFINIDO
+        || juego.critico_gimli == INDEFINIDO
+        || juego.critico_legolas == INDEFINIDO
+    );
+}
+
+/*
+ * Pre: Recibe el juego a inicializar y la configuración.
+ * Pos: Inicializa el juego con los valores de la configuración.
+ *      Aquellos que esten indefinidos serán configurados con los
+ *      los valores que se tomen por animos.
+ */
+void aplicar_configuracion(juego_t *juego, configuracion_t configuracion) {
+    int viento, humedad;
+    char animo_legolas, animo_gimli;
+    if (hay_valores_indefinidos(configuracion.juego)) {        
+        animos(&viento, &humedad, &animo_legolas, &animo_gimli);
+    }
+    inicializar_juego(juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
+}
+
+/*
+ * Pre: Recibe el juego final y los recursos que se contabilizaron al principio.
+ * Pos: Se calcula el puntaje final y se guarda el nombre del usuario.
+ */
+void obtener_rank(rank_t *rank, juego_t juego, int recursos) {
+    rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
+    printf("\nLograste %i puntos\n", rank->puntaje);
+    pedir_nombre(rank->nombre);
+}
+
+/*
  * Definido en juego.h
  */
 int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank) {
-    int salida, recursos, viento, humedad;
-    char animo_legolas, animo_gimli;
+    int recursos;
     juego_t juego;
     FILE* archivo;
     if (strcmp(grabacion, SIN_ARCHIVO)) {
@@ -473,19 +514,15 @@ int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank)
             return ERROR;
         }
     }
-
-    animos(&viento, &humedad, &animo_legolas, &animo_gimli);
-    inicializar_juego(&juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
+    aplicar_configuracion(&juego, configuracion);
     recursos = recursos_usados(juego.torres, configuracion);
-    salida = cargar_nivel(&juego, configuracion);
-    if (salida == ERROR) return ERROR;
+    cargar_nivel(&juego, configuracion);
 
     if (archivo) fwrite(&juego, sizeof(juego_t), 1, archivo);
     while (estado_juego(juego) == JUGANDO) {
         if (estado_nivel(juego.nivel) == GANADO) {
             juego.nivel_actual++;
-            salida = cargar_nivel(&juego, configuracion);
-            if (salida == ERROR) return ERROR;
+            cargar_nivel(&juego, configuracion);
         }
         limpiar_y_mostrar(juego, configuracion.velocidad);
 
@@ -499,8 +536,6 @@ int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank)
     }
     if (archivo) fclose(archivo);
     mostrar_mensaje_final(estado_juego(juego));
-    rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
-    printf("\nLograste %i puntos\n", rank->puntaje);
-    pedir_nombre(rank->nombre);
+    obtener_rank(rank, juego, recursos);
     return !ERROR;
 }

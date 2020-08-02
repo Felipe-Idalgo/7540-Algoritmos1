@@ -489,19 +489,18 @@ int ejecutar_ver_repeticion(char grabacion[MAX_ARCHIVO], float velocidad) {
  * Pre: Puede recibir el nombre de un archivo de configuración para utilizar y el nombre de
  *      un archivo de grabación.
  * Pos: Se podrá ejecutar el juego con una configuración personalizada y grabar el juego.
+ *      Si no ocurre ningun ERROR devuelve 0.
  */
 int ejecutar_jugar_partida(char config[MAX_ARCHIVO], char grabacion[MAX_ARCHIVO]) {
-    int salida;
     configuracion_t configuracion;
     rank_t rank;
 
-    salida = cargar_configuracion(&configuracion, config);
-    if (salida == ERROR) return ERROR;
-    salida = iniciar_juego(configuracion, grabacion, &rank);
-    if (salida == ERROR) return ERROR;
-    salida = grabar_rank(config, rank);
-    if (salida == ERROR) return ERROR;
-    return ejecutar_ranking(INDEFINIDO, config);
+    return (
+        (cargar_configuracion(&configuracion, config) == ERROR)
+        || (iniciar_juego(configuracion, grabacion, &rank) == ERROR)
+        || (grabar_rank(config, rank) == ERROR)
+        || (ejecutar_ranking(INDEFINIDO, config) == ERROR)
+    );
 }
 
 /*

@@ -1,7 +1,7 @@
 #ifndef __JUEGO_H__
 #define __JUEGO_H__
 
-#define MAX_NOMBRE 100
+#define MAX_NOMBRE 20
 
 typedef struct rank {
     char nombre[MAX_NOMBRE];
@@ -15,7 +15,7 @@ typedef struct rank {
  * > Devuelve -1 si no se pudo utilizar la configuración o no se pudo grabar.
  * > Devuelve 0 si no hubo problemas.
  */
-int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank);
+int iniciar_juego(configuracion_t configuracion, char grabacion[MAX_ARCHIVO], rank_t* rank);
 
 /*
  * Se ingresa la grabación de una partida. Se reproducirá el juego
@@ -26,6 +26,6 @@ int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t* rank)
  * > Devuelve -1 si no se pudo abrir el archivo.
  * > Devuelve 0 si no hubo problemas.
  */
-int reproducir_juego(char grabacion[], float velocidad);
+int reproducir_juego(char grabacion[MAX_ARCHIVO], float velocidad);
 
 #endif /*__JUEGO_H__*/

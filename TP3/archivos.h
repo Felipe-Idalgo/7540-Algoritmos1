@@ -9,5 +9,6 @@
 #define FIN_CADENA '\0'
 #define FIN_ETIQUETA '='
 #define MAX_LINEA 200
+#define MAX_ARCHIVO 100
 
 #endif /*__ARCHIVOS_H__*/

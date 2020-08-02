@@ -1,4 +1,3 @@
-#include "archivos.h"
 #include "defendiendo_torres.h"
 #include "configuracion.h"
 #include "caminos.h"
@@ -97,7 +96,7 @@ bool esta_en_mapa(coordenada_t coordenada, int nivel_actual) {
 
 /*
  * Pre: Recibe la posición anterior, la coordenada que se acaba de desplazar y el nivel actual.
- * Pos: Devuelve true si no se vuelve a la posición anterior y si no se va del mapa.
+ * Pos: Devuelve true si la posición es diferente a la anterior y se está dentro del mapa.
  */
 bool es_movimiento_valido(coordenada_t pos_actual, coordenada_t pos_anterior, int nivel_actual) {
     return (!es_misma_coordenada(pos_actual, pos_anterior) && esta_en_mapa(pos_actual, nivel_actual));
@@ -105,7 +104,7 @@ bool es_movimiento_valido(coordenada_t pos_actual, coordenada_t pos_anterior, in
 
 /*
  * Pre: Recibe una coordenada duplicada del último movimiento, la posición anterior
- *       en el camino, y el nivel el cual se está construyendo.
+ *      en el camino, y el nivel el cual se está construyendo.
  * Pos: Permite mover la coordenada a una posición válida. En caso de que no sea
  *      válida, vuelve a preguntar la dirección del movimiento
  */
@@ -212,20 +211,22 @@ int escribir_camino(juego_t juego) {
  * Definido en caminos.h
  */
 int crear_nuevos_caminos (char nuevos_caminos[MAX_ARCHIVO]) {
+    int i = 0, se_puede_escribir = !ERROR;
     FILE* archivo = fopen(nuevos_caminos, ESCRITURA);
     if (!archivo) return ERROR;
-    juego_t juego;
     configuracion_t configuracion;
     cargar_configuracion(&configuracion, SIN_ARCHIVO);
-    inicializar_juego(&juego, 0, 0, (char) 0, (char) 0, configuracion);
-    for (int i = 1; i <= MAX_NIVELES; i++) {
+    juego_t juego = configuracion.juego;
+    inicializar_juego(&juego, 0, 0, (char) 0, (char) 0);
+    while ((i < MAX_NIVELES) && (se_puede_escribir != ERROR)) {
+        i++;
         juego.nivel_actual = i;
         crear_camino(&juego);
-        escribir_camino(juego);
+        se_puede_escribir = escribir_camino(juego);
     }
     fclose(archivo);
     rename(ARCHIVO_TEMPORAL, nuevos_caminos);
-    return !ERROR;
+    return se_puede_escribir;
 }
 
 /*

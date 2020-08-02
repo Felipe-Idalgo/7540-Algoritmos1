@@ -1,5 +1,4 @@
 #include "defendiendo_torres.h"
-#include "archivos.h"
 #include "configuracion.h"
 #include <string.h>
 
@@ -185,7 +184,7 @@ void pedir_defensores_inicio(int *defensores_inicio, char tipo, int nivel) {
 void obtener_defensores_inicio(configuracion_t *configuracion) {
     for (int nivel = 1; nivel <= MAX_NIVELES; nivel++) {
         pedir_defensores_inicio(&(configuracion->enanos_inicio[nivel]), ENANOS, nivel);
-        pedir_defensores_inicio(&(configuracion->elfos_inicio[nivel]), ENANOS, nivel);
+        pedir_defensores_inicio(&(configuracion->elfos_inicio[nivel]), ELFOS, nivel);
     }
 }
 
@@ -322,7 +321,6 @@ void crear_configuracion(configuracion_t *configuracion) {
     obtener_resistencia_torres(configuracion);
     obtener_defensores_extras(configuracion);
     obtener_defensores_inicio(configuracion);
-    obtener_defensores_inicio(configuracion);
     obtener_costo_defensores(configuracion);
     obtener_critico(configuracion);
     obtener_fallo(configuracion);
@@ -393,8 +391,7 @@ int crear_nueva_configuracion(char config[MAX_ARCHIVO]) {
 }
 
 /*
- * Pre: Recibe dos cadenas de caracteres.
- * Pos: Comprueba su coincidencia hasta encontrar un signo FIN_ETIQUETA.
+ * Definido en configuracion.h
  */
 bool tienen_misma_etiqueta(const char etiqueta_1[], const char etiqueta_2[]) {
     bool son_iguales = true, fin_etiqueta = false;
@@ -420,7 +417,7 @@ int cargar_configuracion(configuracion_t *configuracion, char config[MAX_ARCHIVO
         archivo = fopen(config, LECTURA);
         if (!archivo) {
             printf("Probá con otra configuración.\n");
-            return !ERROR;
+            return ERROR;
         }
 
         char linea[MAX_LINEA];

@@ -9,9 +9,6 @@
 #define MAX_LONGITUD_CAMINO 200
 #define MAX_ENEMIGOS 500
 #define MAX_DEFENSORES 50
-#define MAX_NIVELES 4
-#define MAX_ARCHIVO 100
-#define INDEFINIDO -1
 
 typedef struct coordenada {
 	int fil;
@@ -63,25 +60,12 @@ typedef struct juego {
 	int fallo_gimli;
 } juego_t;
 
-typedef struct configuracion {
-    juego_t juego;
-    int max_niveles;
-    int enanos_inicio[MAX_NIVELES];
-    int elfos_inicio[MAX_NIVELES];
-    int costo_enanos_torre_1;
-    int costo_enanos_torre_2;
-    int costo_elfos_torre_1;
-    int costo_elfos_torre_2;
-    float velocidad;
-    char caminos[MAX_ARCHIVO];
-} configuracion_t;
-
 /*
  * Inicializará el juego, cargando la informacion de las torres y
  * los ataques críticos y fallo de Legolas y Gimli.
  * NO inicializará el primer nivel.
  */
-void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion);
+void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli);
 
 /*
  * Recibe un juego con todas sus estructuras válidas.

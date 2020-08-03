@@ -1,4 +1,5 @@
 #include "defendiendo_torres.h"
+#include "configuracion.h"
 #include <stdbool.h>
 #include <math.h>
 
@@ -80,14 +81,12 @@ int fallo_segun_tiempo(int tiempo) {
 }
 
 //~ Definido en defendiendo_torres.h
-void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli, configuracion_t configuracion) {
-    *juego = configuracion.juego;
+void inicializar_juego(juego_t* juego, int viento, int humedad, char animo_legolas, char animo_gimli) {
     inicializar_torres(&(juego->torres));
     if (juego->critico_legolas == INDEFINIDO) juego->critico_legolas = critico_segun_animo(animo_legolas);
     if (juego->critico_gimli == INDEFINIDO) juego->critico_gimli = critico_segun_animo(animo_gimli);
     if (juego->fallo_legolas == INDEFINIDO) juego->fallo_legolas = fallo_segun_tiempo(viento);
     if (juego->fallo_gimli == INDEFINIDO) juego->fallo_gimli = fallo_segun_tiempo(humedad);
-    juego->nivel_actual = PRIMER_NIVEL;
 }
 
 //~ Pre: Recibe el estado de las torres en cada turno.
@@ -565,10 +564,8 @@ void mostrar_informacion(juego_t juego) {
 void mostrar_juego(juego_t juego) {
     char mapa[MAX_FILAS][MAX_COLUMNAS];
     int tope_fil, tope_col;
-
     definir_dimensiones(juego.nivel_actual, &tope_fil, &tope_col);
     generar_mapa(mapa, tope_fil, tope_col);
-
     pintar_camino(mapa, juego.nivel.camino_1, juego.nivel.tope_camino_1, CAMINO_UNO);
     pintar_camino(mapa, juego.nivel.camino_2, juego.nivel.tope_camino_2, CAMINO_DOS);
     pintar_enemigos(mapa, juego.nivel.camino_1, juego.nivel.tope_camino_1, juego.nivel.enemigos, juego.nivel.tope_enemigos, CAMINO_UNO);
@@ -576,7 +573,6 @@ void mostrar_juego(juego_t juego) {
     pintar_entradas_y_torres(mapa, juego.nivel);
     pintar_defensores(mapa, juego.nivel);
     printf("\n");
-
     mostrar_encabezado(juego);
     mostrar_mapa(mapa, tope_fil, tope_col);
     mostrar_informacion(juego);

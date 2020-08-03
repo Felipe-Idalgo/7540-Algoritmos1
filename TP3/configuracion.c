@@ -1,5 +1,4 @@
 #include "defendiendo_torres.h"
-#include "archivos.h"
 #include "configuracion.h"
 #include <string.h>
 

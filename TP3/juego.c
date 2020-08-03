@@ -1,14 +1,14 @@
 #define AUTOR "MG"
 #define FECHA "Julio2020"
 
-#include <stdbool.h>
-#include <string.h>
 #include "defendiendo_torres.h"
+#include "configuracion.h"
+#include "caminos.h"
 #include "animos.h"
 #include "utiles.h"
 #include "juego.h"
-#include "archivos.h"
-#include "caminos.h"
+#include <stdbool.h>
+#include <string.h>
 
 #define ERROR -1
 
@@ -25,7 +25,7 @@
 #define AGREGADO 0
 
 const char IGNORAR = 'X';
-const float DELAY = 0.3f, DELAY_REPRODUCCION = 1.0f;
+const float DELAY = 0.2f, DELAY_REPRODUCCION = 1.0f;
 
 const int ENANOS_INICIALES_PRIMER_NIVEL = 5,
           ELFOS_INICIALES_PRIMER_NIVEL = 0,
@@ -135,7 +135,7 @@ void pedir_coordenada(coordenada_t *coordenada, int nivel) {
 /*
  * Pre: Recibe el número de nivel que se va a jugar, el tipo de defensores que se desea agregar
  *      y la configuración elegida para el juego.
- * Pos: Devuelve la cantidad de defensores que se deberían agregar según la configuración. Cuando
+ * Pos: Devuelve la cantidad de defensores que se deberán agregar según la configuración. Cuando
  *      tiene valor INDEFINIDO, se toman los valores por default.
  */
 int defensores_segun_configuracion(int nivel_actual, char tipo, configuracion_t configuracion) {
@@ -187,7 +187,7 @@ void cargar_defensores_iniciales(juego_t *juego, configuracion_t configuracion) 
 /*
  * Pre: Recibe el tipo de defensores, el número de torre y la configuración elegida.
  * Pos: Devuelve el costo que tendría para la torre, usar un defensor, según la configuración.
- *      Los valores INDEFINIDOs devuelven los valores por default.
+ *      Los valores INDEFINIDOs toman los valores por default.
  */
 int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t configuracion){
     int costo;
@@ -207,7 +207,7 @@ int costo_defensor_segun_configuracion(char tipo, int torre, configuracion_t con
     return costo;
 }
 
-//~ Pre: Recibe la instancia de un juego y la de sus torres.
+//~ Pre: Recibe la instancia de un juego y la de sus torres, y la configuración.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un enano al juego.
 bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
     int costo_torre_1 = costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion);
@@ -220,7 +220,7 @@ bool puede_agregar_enanos(torres_t torres, configuracion_t configuracion) {
     );
 }
 
-//~ Pre: Recibe la instancia de un juego y la de sus torres.
+//~ Pre: Recibe la instancia de un juego y la de sus torres, y la configuración.
 //~ Pos: Si el nivel lo permite y las torres tienen suficientes recursos, permite agregar un elfo al juego.
 bool puede_agregar_elfos(torres_t torres, configuracion_t configuracion) {
     int costo_torre_1 = costo_defensor_segun_configuracion(ELFOS, TORRE_UNO, configuracion);
@@ -233,13 +233,14 @@ bool puede_agregar_elfos(torres_t torres, configuracion_t configuracion) {
     );
 }
 
-//~ Pre: Recibe la instancia de un juego y la de sus torres.
+//~ Pre: Recibe la instancia de un juego, la de sus torres y la configuracion.
 //~ Pos: Devuelve verdadero si se permite agregar un elfo o un enano al juego.
 bool hay_extra_disponible(torres_t torres, configuracion_t configuracion) {
     return puede_agregar_enanos(torres, configuracion) || puede_agregar_elfos(torres, configuracion);
 }
 
-//~ Pre: Recibe la cantidad de enemigos que salieron en el nivel y si quedan defensores extras.
+//~ Pre: Recibe la cantidad de enemigos que salieron en el nivel, si quedan defensores extras
+//~      y la configuración.
 //~ Pos: Devuelve verdadero si se dan todas las condiciones para agregar un defensor extra al juego.
 bool se_puede_agregar_extra(juego_t juego, configuracion_t configuracion) {
     bool primera_condicion = hay_extra_disponible(juego.torres, configuracion);
@@ -253,8 +254,9 @@ bool se_puede_agregar_extra(juego_t juego, configuracion_t configuracion) {
     return (primera_condicion && segunda_condicion && tercera_condicion);
 }
 
-//~ Pre: Recibe un tipo ingresado por el usuario.
-//~ Pos: Devuelve verdadero si la respuesta es ENANOS, ELFOS o el usuario quiere IGNORAR el mensaje.
+//~ Pre: Recibe un tipo ingresado por el usuario y las cantidades de defensores extras que
+//~      hay disponibles y su costo por configuración.
+//~ Pos: Devuelve verdadero si puede agregar el tipo pedido o el usuario quiere IGNORAR el mensaje.
 bool es_tipo_valido(char tipo, torres_t torres, configuracion_t configuracion) {
     return (
         (tipo == ENANOS && puede_agregar_enanos(torres, configuracion))
@@ -263,7 +265,7 @@ bool es_tipo_valido(char tipo, torres_t torres, configuracion_t configuracion) {
     );
 }
 
-//~ Pre: Recibe una instancia de juego y un tipo de defensor sin inicializar.
+//~ Pre: Recibe una instancia de juego y un tipo de defensor sin inicializar, y la configuración.
 //~ Pos: El usuario ingresa un tipo valido, para agregar un defensor o ignorar el mensaje.
 void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
     bool hay_enanos_disponibles = puede_agregar_enanos(torres, configuracion);
@@ -299,14 +301,14 @@ void pedir_tipo(torres_t torres, char *tipo, configuracion_t configuracion) {
     }
 }
 
-//~ Elimina un enano de la torre_1.
+//~ Elimina un enano extra y resta los puntos de las torres.
 void descontar_enano(torres_t *torres, configuracion_t configuracion) {
     torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ENANOS, TORRE_UNO, configuracion);
     torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ENANOS, TORRE_DOS, configuracion);
     torres->enanos_extra--;
 }
 
-//~ Elimina un elfo de la torre_2.
+//~ Elimina un elfo extra y resta los puntos de las torres.
 void descontar_elfo(torres_t *torres, configuracion_t configuracion) {
     torres->resistencia_torre_1 -= costo_defensor_segun_configuracion(ELFOS, TORRE_DOS, configuracion);
     torres->resistencia_torre_2 -= costo_defensor_segun_configuracion(ELFOS, TORRE_UNO, configuracion);
@@ -343,16 +345,16 @@ void cargar_enemigos(juego_t *juego){
 }
 
 //~ Selección de mensajes para mostrar al inicio de cada nivel.
-void mostrar_intro_nivel(juego_t juego, configuracion_t configuracion) {
-    int defensores = defensores_segun_configuracion(juego.nivel_actual, ENANOS, configuracion);
-    defensores += defensores_segun_configuracion(juego.nivel_actual, ELFOS, configuracion);
-    if (primer_nivel(juego)) {
+void mostrar_intro_nivel(configuracion_t configuracion) {
+    int defensores = defensores_segun_configuracion(configuracion.juego.nivel_actual, ENANOS, configuracion);
+    defensores += defensores_segun_configuracion(configuracion.juego.nivel_actual, ELFOS, configuracion);
+    if (primer_nivel(configuracion.juego)) {
         esperar();
-        mostrar_ayuda(juego);
+        mostrar_ayuda(configuracion.juego);
         printf("\nLos enemigos vienen por el este! \nPlanean atacar la torre 1. \nSe necesitan %i defensores para protegerla\n", defensores);
-    } else if (segundo_nivel(juego)) {
+    } else if (segundo_nivel(configuracion.juego)) {
         printf("\nVienen más orcos! \nAhora se acercan por el oeste para atacar la torre 2! \nPosicione %i defensores para detenerlos\n", defensores);
-    } else if (tercer_nivel(juego)) {
+    } else if (tercer_nivel(configuracion.juego)) {
         printf("\nOh no! Los enemigos siguen acercándose, esta vez por el norte. \nPueden atacar las dos torres! Ubique %i defensores para protegerlas!\n", defensores);
     } else {
         printf("\nTodavía hay más?!!! Los enemigos vienen por el sur! \nSe dirigen a ambas torres de nuevo. Ubique %i defensores para defenderlas\n", defensores);
@@ -360,15 +362,14 @@ void mostrar_intro_nivel(juego_t juego, configuracion_t configuracion) {
     esperar();
 }
 
-//~ Pre: Recibe un juego en una nueva instancia.
-//~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y eliminando enemigos previos. Introduce el nivel con un mensaje.
-int cargar_nivel(juego_t *juego, configuracion_t configuracion) {
-    int salida;
-    mostrar_intro_nivel(*juego, configuracion);
-    salida = cargar_caminos(juego, configuracion.caminos);
-    if (salida == ERROR) return ERROR;
-    cargar_enemigos(juego);
-    cargar_defensores_iniciales(juego, configuracion);
+//~ Pre: Recibe el juego de una configuración junto a toda configuración.
+//~ Pos: Inicializa un nuevo nivel modificando caminos, renovando defensores y
+//~      eliminando enemigos previos. Introduce el nivel con un mensaje.
+int cargar_nivel(configuracion_t *configuracion) {
+    mostrar_intro_nivel(*configuracion);
+    if (cargar_caminos(&(configuracion->juego), configuracion->caminos) == ERROR) return ERROR;
+    cargar_enemigos(&(configuracion->juego));
+    cargar_defensores_iniciales(&(configuracion->juego), *configuracion);
     return !ERROR;
 }
 
@@ -397,13 +398,17 @@ void mostrar_mensaje_final(int estado_juego) {
 void pedir_nombre(char nombre[MAX_NOMBRE]) {
     printf("Ingrese su nombre: ");
     scanf("%s", nombre);
+    while (strlen(nombre) >= MAX_NOMBRE) {
+        printf("Ingresa un nombre más corto: ");
+        scanf("%s", nombre);
+    }
 }
 
 /*
  * Pre: Recibe el juego terminado.
- * Pos: Devuelve la cantidad de enemigos que se han derrotado.
+ * Pos: Devuelve la cantidad de enemigos que están muertos.
  */
-int cantidad_de_enemigos_vencidos(juego_t juego) {
+int cantidad_de_enemigos_muertos(juego_t juego) {
     int i, orcos_muertos = SIN_ENEMIGOS;
 
     for (i = 0; i < juego.nivel.tope_enemigos; i++)
@@ -430,11 +435,22 @@ int recursos_usados (torres_t torres, configuracion_t configuracion) {
     recursos += torres.resistencia_torre_2;
     recursos += torres.enanos_extra;
     recursos += 2 * torres.elfos_extra;
-    for (i = 0; i < configuracion.max_niveles; i++) {
+    for (i = 0; i < MAX_NIVELES; i++) {
         recursos += defensores_segun_configuracion(i+1, ENANOS, configuracion);
         recursos += 2 * defensores_segun_configuracion(i+1, ELFOS, configuracion);
     }
     return recursos;
+}
+
+/*
+ * Pre: Recibe el juego en su estado final y los recursos que se contabilizaron de
+ *      la configuración.
+ * Pos: Se obtiene la puntuación final y el usuario guarda su nombre en el rank.
+ */
+void obtener_rank(rank_t *rank, juego_t juego, int recursos) {
+    rank->puntaje = (cantidad_de_enemigos_muertos(juego) * 1000) / recursos;
+    printf("\nLograste %i puntos\n", rank->puntaje);
+    pedir_nombre(rank->nombre);
 }
 
 /*
@@ -443,7 +459,7 @@ int recursos_usados (torres_t torres, configuracion_t configuracion) {
 int reproducir_juego(char grabacion[], float velocidad) {
     juego_t juego;
     FILE* archivo;
-    archivo = fopen(grabacion, "r");
+    archivo = fopen(grabacion, LECTURA);
     if (!archivo) {
         printf("No se pudo abrir la grabación.\n");
         return ERROR;
@@ -459,8 +475,8 @@ int reproducir_juego(char grabacion[], float velocidad) {
 }
 
 /*
- * Pre: Recibe los valores del juego de la configuracion.
- * Pos: Devuelve true si al menos uno de ellos se encuentra indefinido.
+ * Pre: Recibe el juego de una configuración.
+ * Pos: Devuelve true si alguno de los valores quedaron indefinidos.
  */
 bool hay_valores_indefinidos(juego_t juego) {
     return (
@@ -468,45 +484,35 @@ bool hay_valores_indefinidos(juego_t juego) {
         || juego.torres.resistencia_torre_2 == INDEFINIDO
         || juego.torres.enanos_extra == INDEFINIDO
         || juego.torres.elfos_extra == INDEFINIDO
-        || juego.fallo_gimli == INDEFINIDO
-        || juego.fallo_legolas == INDEFINIDO
         || juego.critico_gimli == INDEFINIDO
         || juego.critico_legolas == INDEFINIDO
+        || juego.fallo_gimli == INDEFINIDO
+        || juego.fallo_legolas ==   INDEFINIDO
     );
 }
 
 /*
- * Pre: Recibe el juego a inicializar y la configuración.
- * Pos: Inicializa el juego con los valores de la configuración.
- *      Aquellos que esten indefinidos serán configurados con los
- *      los valores que se tomen por animos.
+ * Pre: Recibe el juego de una configuración.
+ * Pos: Comprueba si quedó alguno de los valores indefinidos para ejecutar el
+ *      juego normal y obtener los datos faltantes.
  */
-void aplicar_configuracion(juego_t *juego, configuracion_t configuracion) {
+void inicializar_config_indefinida(juego_t *juego) {
     int viento, humedad;
     char animo_legolas, animo_gimli;
-    if (hay_valores_indefinidos(configuracion.juego)) {        
+    if (hay_valores_indefinidos(*juego)) {
         animos(&viento, &humedad, &animo_legolas, &animo_gimli);
+        inicializar_juego(juego, viento, humedad, animo_legolas, animo_gimli);
     }
-    inicializar_juego(juego, viento, humedad, animo_legolas, animo_gimli, configuracion);
+    juego->nivel_actual = PRIMER_NIVEL;
 }
 
 /*
- * Pre: Recibe el juego final y los recursos que se contabilizaron al principio.
- * Pos: Se calcula el puntaje final y se guarda el nombre del usuario.
+ * Pre: Recibe la configuración y el juego inicializado. Puede recibir
+ *      la ruta de un archivo para guardar la grabación de la partida.
+ * Pos: Trascurre la ejecución del juego. Devuelve 0 si no hay errores.
  */
-void obtener_rank(rank_t *rank, juego_t juego, int recursos) {
-    rank->puntaje = (cantidad_de_enemigos_vencidos(juego) * 1000) / recursos;
-    printf("\nLograste %i puntos\n", rank->puntaje);
-    pedir_nombre(rank->nombre);
-}
-
-/*
- * Definido en juego.h
- */
-int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank) {
-    int recursos;
-    juego_t juego;
-    FILE* archivo;
+int jugar(configuracion_t *configuracion, char grabacion[MAX_ARCHIVO]) {
+    FILE* archivo = NULL;
     if (strcmp(grabacion, SIN_ARCHIVO)) {
         archivo = fopen(grabacion, ESCRITURA);
         if (!archivo) {
@@ -514,28 +520,44 @@ int iniciar_juego(configuracion_t configuracion, char grabacion[], rank_t *rank)
             return ERROR;
         }
     }
-    aplicar_configuracion(&juego, configuracion);
-    recursos = recursos_usados(juego.torres, configuracion);
-    cargar_nivel(&juego, configuracion);
-
-    if (archivo) fwrite(&juego, sizeof(juego_t), 1, archivo);
-    while (estado_juego(juego) == JUGANDO) {
-        if (estado_nivel(juego.nivel) == GANADO) {
-            juego.nivel_actual++;
-            cargar_nivel(&juego, configuracion);
+    cargar_nivel(configuracion);
+    if (archivo) fwrite(&(configuracion->juego), sizeof(juego_t), 1, archivo);
+    while (estado_juego(configuracion->juego) == JUGANDO) {
+        if (estado_nivel(configuracion->juego.nivel) == GANADO) {
+            (configuracion->juego.nivel_actual)++;
+            cargar_nivel(configuracion);
         }
-        limpiar_y_mostrar(juego, configuracion.velocidad);
-
-        if (se_puede_agregar_extra(juego, configuracion)) {
-            agregar_defensor_extra(&juego, configuracion);
+        limpiar_y_mostrar(configuracion->juego, configuracion->velocidad);
+        if (se_puede_agregar_extra(configuracion->juego, *configuracion)) {
+            agregar_defensor_extra(&(configuracion->juego), *configuracion);
             detener_el_tiempo(DELAY);
-            limpiar_y_mostrar(juego, configuracion.velocidad);
+            limpiar_y_mostrar(configuracion->juego, configuracion->velocidad);
             }
-        jugar_turno(&juego);
-        if (archivo) fwrite(&juego, sizeof(juego_t), 1, archivo);
+        jugar_turno(&(configuracion->juego));
+        if (archivo) fwrite(&(configuracion->juego), sizeof(juego_t), 1, archivo);
     }
     if (archivo) fclose(archivo);
+    return !ERROR;
+}
+
+/*
+ * Muestra mensaje al terminar el juego y obtiene la puntuación y el nombre del jugador.
+ */
+int terminar_juego(rank_t *rank, juego_t juego, int recursos) {
     mostrar_mensaje_final(estado_juego(juego));
     obtener_rank(rank, juego, recursos);
     return !ERROR;
+}
+
+/*
+ * Definido en juego.h
+ */
+int iniciar_juego(configuracion_t configuracion, char grabacion[MAX_ARCHIVO], rank_t *rank) {
+    int recursos;
+    inicializar_config_indefinida(&(configuracion.juego));
+    recursos = recursos_usados(configuracion.juego.torres, configuracion);
+    return (
+        (jugar(&configuracion, grabacion) == ERROR)
+        || (terminar_juego(rank, configuracion.juego, recursos) == ERROR)
+    );
 }
